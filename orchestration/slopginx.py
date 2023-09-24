@@ -14,7 +14,8 @@ import threading
 BIND = ("localhost", 8000)
 
 HOST_PORT = 8080
-HOSTS = ["dh2020pc17", "dh2020pc19"]
+with open("hosts") as f:
+    HOSTS = [line.rstrip() for line in f.readlines()]
 
 def choose_host(seed):
     # todo - do something with the seed to get deterministic results
