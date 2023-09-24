@@ -63,6 +63,7 @@ public class URLShortner {
 			if(verbose)System.out.println("first line: "+input);
 			Pattern pput = Pattern.compile("^PUT\\s+/\\?short=(\\S+)&long=(\\S+)\\s+(\\S+)$");
 			Matcher mput = pput.matcher(input);
+			System.out.println(input);
 			if(mput.matches()){ // persist URL
 				String shortResource=mput.group(1);
 				String longResource=mput.group(2);
