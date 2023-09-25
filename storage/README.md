@@ -7,3 +7,9 @@ The storage module provides a simple interface for storing and retrieving data f
 ```bash
 $ ./createDB.bash
 ```
+
+Add an optional number argument to specify the number of records to populate the database with.
+
+```bash
+$ ./createDB.bash 100
+```
