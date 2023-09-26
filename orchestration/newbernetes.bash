@@ -27,7 +27,7 @@ declare -a nodes
 # kill all nodes when this script exits
 trap "kill_all_nodes && exit" INT
 
-for host in $(cat ./orchestration/hosts); do
+for host in $(cat hosts); do
     exec_on_host $host
 done
 

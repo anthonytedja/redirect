@@ -1,6 +1,6 @@
 #!/bin/bash
 
-CWD="`pwd`";
+CWD=$(pwd)/storage;
 
 for host in `cat hosts`
 do
