@@ -5,3 +5,4 @@ scripts
  - the following scripts must be called from the root folder:
 storage/createDB.bash
 orchestration/newbernetes.bash
+orchestration/slopginx.py
