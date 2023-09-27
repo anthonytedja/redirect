@@ -3,35 +3,29 @@
 
 CWD=$(pwd)
 
-exec_on_host() {
-    # idk what the -t -t does but if we don't have it, nodes don't get killed properly
-    ssh -t -t "$1" "cd $CWD && java URLShortner.java" &
-    nodepid=$!
-    nodes+=($nodepid)
-    echo "exec on host: $host, node: $nodepid"
+start_server() {
+    server_pid=$(ssh $1 "cd $CWD; ./orchestration/newbernetesLocal.bash $PATH")
+    host_to_pid[$1]=$server_pid
+    echo "Started server on host $host, PID: $server_pid"
 }
 
-kill_node() {
-    kill $1
-    echo "killed node $1"
-}
-
-kill_all_nodes() {
-    for node in "${nodes[@]}"; do
-        kill_node $node
+shutdown() {
+    for host in "${!host_to_pid[@]}"; do
+        ssh $host "kill ${host_to_pid[$host]}"
+	echo "Killed $host"
     done
 }
 
-declare -a nodes
+declare -A host_to_pid
 
 # kill all nodes when this script exits
-trap "kill_all_nodes && exit" INT
+trap "shutdown && exit" INT
 
 for host in $(cat hosts); do
-    exec_on_host $host
+    start_server $host
 done
 
-echo "CTRL+C to kill nodes..."
+echo "CTRL+C to kill all servers..."
 
 # infinite loop
 tail -f /dev/null
