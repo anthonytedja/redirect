@@ -29,14 +29,15 @@ public class URLShortner {
 	static final String REDIRECT = "redirect.html";
 	static final String NOT_FOUND = "notfound.html";
 	static final String DATABASE = "database.txt";
-	// port to listen connection
-	static final int PORT = 8080;
-
+	
 	// verbose mode
 	static final boolean verbose = false;
 
 	public static void main(String[] args) {
 		try {
+      // port to listen connection
+      int PORT = Integer.parseInt(args[0]);
+      
 			ServerSocket serverConnect = new ServerSocket(PORT);
 			System.out.println("Server started.\nListening for connections on port : " + PORT + " ...\n");
 
@@ -49,7 +50,9 @@ public class URLShortner {
 			}
 		} catch (IOException e) {
 			System.err.println("Server Connection error : " + e.getMessage());
-		}
+    } catch (ArrayIndexOutOfBoundsException e) {
+      System.err.println("Usage: java URLShortner.java [PORT]");
+    }
 	}
 
 	public static void handle(Socket connect) {

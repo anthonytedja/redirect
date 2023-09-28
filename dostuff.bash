@@ -1,10 +1,13 @@
 #!/bin/bash
-./orchestration/slopginx.py &
+HOSTPORT=$(cat HOSTPORT)
+
+cd orchestration
+./slopginx.py $HOSTPORT &
 slopginx=($!)
 echo "STARTING SLOPGINX $slopginx"
 
 echo "STARTING NEWBERNETES"
-./orchestration/newbernetes.bash
+./orchestration/newbernetes.bash $HOSTPORT
 echo "KILLED NEWBERNETES"
 
 kill $slopginx

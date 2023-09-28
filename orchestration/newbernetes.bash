@@ -2,6 +2,7 @@
 # kubernetes coded by newbs
 
 CWD=$(pwd)
+HOSTPORT=$1
 
 start_server() {
     server_pid=$(ssh $1 "cd $CWD; ./orchestration/newbernetesLocal.bash $PATH")

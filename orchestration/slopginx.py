@@ -10,10 +10,15 @@ import http.server
 import http.client
 import random
 import threading
+import sys
+
+if len(sys.argv) != 2:
+  print("Usage: ./slopginx HOSTPORT")
+  exit(1)
 
 BIND = ("localhost", 8000)
+HOST_PORT = sys.argv[1]
 
-HOST_PORT = 8080
 with open("hosts") as f:
     HOSTS = [line.rstrip() for line in f.readlines()]
 
