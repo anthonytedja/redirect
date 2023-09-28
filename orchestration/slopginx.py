@@ -56,6 +56,6 @@ class DiscountNginx(http.server.BaseHTTPRequestHandler):
         self.wfile.write(response.read())
 
 
-with http.server.HTTPServer(BIND, DiscountNginx) as server:
+with http.server.ThreadingHTTPServer(BIND, DiscountNginx) as server:
     print(f"Listening on {BIND}")
     server.serve_forever()
