@@ -6,3 +6,4 @@ scripts
 storage/createDB.bash
 orchestration/newbernetes.bash
 orchestration/slopginx.py
+monitoring/monitorAll.bash
