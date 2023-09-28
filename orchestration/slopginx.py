@@ -19,7 +19,7 @@ if len(sys.argv) != 2:
 BIND = ("localhost", 8000)
 HOST_PORT = sys.argv[1]
 
-with open("hosts") as f:
+with open("HOSTS") as f:
     HOSTS = [line.rstrip() for line in f.readlines()]
 
 def choose_host(seed):
