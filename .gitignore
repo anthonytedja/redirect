@@ -3,3 +3,6 @@
 
 # exclude database
 database.txt
+
+# exclude host logging
+orchestration/out
