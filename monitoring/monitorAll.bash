@@ -4,7 +4,7 @@
 # Monitor every 5 seconds by default.
 
 check_hosts() {
-	for host in `cat hosts`
+	for host in `cat HOSTS`
 	do
 		date=$(date +"%Y-%m-%d %T")
 		host_status=$(./monitoring/checkHost.bash $host)
