@@ -1,21 +1,19 @@
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.PrintWriter;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.OutputStream;
-import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.URL;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Date;
-import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,34 +26,46 @@ public class URLShortner {
 	static final String REDIRECT_RECORDED = "redirect_recorded.html";
 	static final String REDIRECT = "redirect.html";
 	static final String NOT_FOUND = "notfound.html";
-	static final String DATABASE = "database.txt";
-	
+
 	// verbose mode
-	static final boolean verbose = false;
+	static final boolean verbose = true;
+
+	private static Connection connect(String url) {
+		Connection conn = null;
+		try {
+			conn = DriverManager.getConnection(url);
+		} catch (SQLException e) {
+			System.out.println(e.getMessage());
+		}
+		return conn;
+	}
 
 	public static void main(String[] args) {
 		try {
-      // port to listen connection
-      int PORT = Integer.parseInt(args[0]);
-      
-			ServerSocket serverConnect = new ServerSocket(PORT);
-			System.out.println("Server started.\nListening for connections on port : " + PORT + " ...\n");
+			// port to listen connection
+			int PORT = Integer.parseInt(args[0]);
+			// database url
+			String DBPath = args[1];
 
-			// we listen until user halts server execution
-			while (true) {
-				if (verbose) {
-					System.out.println("Connecton opened. (" + new Date() + ")");
+			try (ServerSocket serverConnect = new ServerSocket(PORT)) {
+				System.out.println("Server started.\nListening for connections on port : " + PORT + " ...\n");
+
+				// we listen until user halts server execution
+				while (true) {
+					if (verbose) {
+						System.out.println("Connection opened. (" + new Date() + ")");
+					}
+					handle(serverConnect.accept(), DBPath);
 				}
-				handle(serverConnect.accept());
 			}
 		} catch (IOException e) {
 			System.err.println("Server Connection error : " + e.getMessage());
-    } catch (ArrayIndexOutOfBoundsException e) {
-      System.err.println("Usage: java URLShortner.java [PORT]");
-    }
+		} catch (ArrayIndexOutOfBoundsException e) {
+			System.err.println("Usage: java [SQLITE JAR CLASSPATH] URLShortner.java [PORT] [JDBC DB URL]");
+		}
 	}
 
-	public static void handle(Socket connect) {
+	public static void handle(Socket connect, String DBPath) {
 		BufferedReader in = null;
 		PrintWriter out = null;
 		BufferedOutputStream dataOut = null;
@@ -75,9 +85,9 @@ public class URLShortner {
 			if (mput.matches()) { // persist URL
 				String shortResource = mput.group(1);
 				String longResource = mput.group(2);
-				String httpVersion = mput.group(3);
+				// String httpVersion = mput.group(3);
 
-				save(shortResource, longResource);
+				save(shortResource, longResource, DBPath);
 
 				File file = new File(WEB_ROOT, REDIRECT_RECORDED);
 				int fileLength = (int) file.length();
@@ -99,11 +109,11 @@ public class URLShortner {
 				Pattern pget = Pattern.compile("^(\\S+)\\s+/(\\S+)\\s+(\\S+)$");
 				Matcher mget = pget.matcher(input);
 				if (mget.matches()) {
-					String method = mget.group(1);
+					// String method = mget.group(1);
 					String shortResource = mget.group(2);
-					String httpVersion = mget.group(3);
+					// String httpVersion = mget.group(3);
 
-					String longResource = find(shortResource);
+					String longResource = find(shortResource, DBPath);
 					if (longResource != null) { // case 1: URL exists - display success page
 						File file = new File(WEB_ROOT, REDIRECT);
 						int fileLength = (int) file.length();
@@ -161,40 +171,66 @@ public class URLShortner {
 	}
 
 	// obtain the full URL given a shortened URL
-	private static String find(String shortURL) {
+	private static String find(String shortURL, String DBPath) {
 		String longURL = null;
+		Connection conn = null;
 		try {
-			File file = new File(DATABASE);
-			FileReader fileReader = new FileReader(file);
-			BufferedReader bufferedReader = new BufferedReader(fileReader);
-			String line;
-			while ((line = bufferedReader.readLine()) != null) {
-				String[] map = line.split("\t");
-				if (map[0].equals(shortURL)) {
-					longURL = map[1];
-					break;
-				}
+			conn = connect(DBPath);
+			String sql = "SELECT * FROM urls WHERE short_code = ?";
+			PreparedStatement ps = conn.prepareStatement(sql);
+			ps.setString(1, shortURL);
+			ResultSet rs = ps.executeQuery();
+			if (rs.next()) {
+				longURL = rs.getString("url_original");
 			}
-			fileReader.close();
-		} catch (IOException e) {
-
+		} catch (SQLException e) {
+			System.out.println(e.getMessage());
+		} finally {
+			try {
+				if (conn != null) {
+					conn.close();
+				}
+			} catch (SQLException ex) {
+				System.out.println(ex.getMessage());
+			}
 		}
 		return longURL;
 	}
 
 	// persist the short and long URLs
-	private static void save(String shortURL, String longURL) {
+	private static void save(String shortURL, String longURL, String DBPath) {
+		Connection conn = null;
 		try {
-			File file = new File(DATABASE);
-			FileWriter fw = new FileWriter(file, true);
-			BufferedWriter bw = new BufferedWriter(fw);
-			PrintWriter pw = new PrintWriter(fw);
-			pw.println(shortURL + "\t" + longURL);
-			pw.close();
-		} catch (IOException e) {
+			conn = connect(DBPath);
+			/**
+			 * pragma locking_mode=EXCLUSIVE;
+			 * pragma mmap_size = 30000000000;
+			 * pragma temp_store = memory;
+			 **/
+			String sql = """
+					 	pragma journal_mode = WAL;
+						pragma synchronous = normal;
+					""";
+			Statement stmt = conn.createStatement();
+			stmt.executeUpdate(sql);
 
+			String updateSQL = "INSERT OR REPLACE INTO urls (short_code, url_original) VALUES (?, ?)";
+			PreparedStatement ps = conn.prepareStatement(updateSQL);
+			ps.setString(1, shortURL);
+			ps.setString(2, longURL);
+			ps.execute();
+
+		} catch (SQLException e) {
+			System.out.println(e.getMessage());
+		} finally {
+			try {
+				if (conn != null) {
+					conn.close();
+				}
+			} catch (SQLException ex) {
+				System.out.println(ex.getMessage());
+			}
 		}
-		return;
 	}
 
 	// load a file into memory

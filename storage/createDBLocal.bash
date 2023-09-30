@@ -2,7 +2,7 @@
 
 mkdir -p /virtual/$USER/URLShortner
 rm -f /virtual/$USER/URLShortner/data.db
-sqlite3 /virtual/$USER/URLShortner/data.db < schema.sql
+sqlite3 /virtual/$USER/URLShortner/data.db < storage/schema.sql
 
-javac Populate.java
-java -classpath ".:sqlite-jdbc-3.39.3.0.jar" Populate.java "jdbc:sqlite:/virtual/$USER/URLShortner/data.db" $1
+javac storage/Populate.java
+java -classpath ".:storage/sqlite-jdbc-3.39.3.0.jar" storage/Populate.java "jdbc:sqlite:/virtual/$USER/URLShortner/data.db" $1
