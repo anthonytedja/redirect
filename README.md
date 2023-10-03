@@ -1,9 +1,27 @@
-hosts
- - all hosts are specified in the "hosts" file in the root directory
+# CSC409 A1 - URL Shortener
 
-scripts
- - the following scripts must be called from the root folder:
-storage/createDB.bash
-orchestration/newbernetes.bash
-orchestration/slopginx.py
-monitoring/monitorAll.bash
+## General Notes
+### Hosts
+All hosts are specified in the `HOSTS` file in the root directory.
+### Scripts
+The following scripts must be called from the root folder:
+ - storage/
+   - createDB.bash
+   - createDB.bash
+ - orchestration/
+   - newbernetes.bash
+   - slopginx.py
+ - monitoring/
+   - monitorAll.bash
+
+## Initial Setup
+After pulling, run the following from root to setup the database:
+```bash
+$ ./dostuff/createDB.bash
+```
+
+## System Orchestration
+Run the following from root to start the system:
+```bash
+$ ./dostuff.bash
+```
