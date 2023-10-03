@@ -5,7 +5,7 @@ rm -rf ./orchestration/out
 mkdir ./orchestration/out
 
 CWD=$(pwd)
-HOSTPORT=$1
+HOSTPORT=$(cat HOSTPORT)
 
 start_server() {
     server_pid=$(ssh $1 "cd $CWD; ./orchestration/newbernetesLocal.bash $HOSTPORT")
