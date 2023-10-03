@@ -15,10 +15,7 @@ The following scripts must be called from the root folder:
    - monitorAll.bash
 
 ## Initial Setup
-After pulling, run the following from root to setup the database:
-```bash
-$ ./dostuff/createDB.bash
-```
+...
 
 ## System Orchestration
 Run the following from root to start the system:
