@@ -1,0 +1,5 @@
+#!/bin/bash
+
+seq 1 1000 | xargs -P4 -I{} curl -s -o thing http://localhost:8085/abc
+
+# seq 1 200 | xargs -n1 -P10  curl "http://localhost:5000/example"

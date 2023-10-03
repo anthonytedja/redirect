@@ -1,0 +1,2 @@
+#!/bin/bash
+ab -n 1600 -c 4 -g load.tsv -u /dev/null -T text/plain 'http://localhost:8000/?short=abc&long=123'

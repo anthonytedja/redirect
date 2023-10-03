@@ -1,0 +1,12 @@
+#!/bin/bash
+randParam() {
+  randText() {
+    cat /dev/random | head -c 6 | sha1sum | head -c 10
+  }
+  short=$(randText)
+  long=$(randText)
+  echo "short=$short&long=$long"
+}
+
+export -f randParam
+seq 1 400 | xargs -L1 bash -c "randParam" | xargs -P4 -I{} curl -s -o thing -X PUT http://localhost:8085/?{}
