@@ -8,7 +8,7 @@ CWD=$(pwd)
 HOSTPORT=$(cat HOSTPORT)
 
 start_server() {
-    server_pid=$(ssh $1 "cd $CWD; ./orchestration/newbernetesLocal.bash $HOSTPORT")
+    server_pid=$(ssh $1 "cd '$CWD'; ./orchestration/newbernetesLocal.bash $HOSTPORT")
     host_to_pid[$1]=$server_pid
     echo "Started server on host $host, PID: $server_pid"
 }
