@@ -22,3 +22,14 @@ Run the following from root to start the system:
 ```bash
 $ ./dostuff.bash
 ```
+
+## API
+Sample GET:
+```bash
+$ curl "http://localhost:8085/arnold" 
+```
+
+Sample PUT:
+```bash
+$ curl -X PUT "http://localhost:8085?short=arnold&long=http://google.com"
+```
