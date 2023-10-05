@@ -1,2 +1,0 @@
-#!/bin/bash
-ab -n 4000 -c 4 -g load.tsv http://localhost:8000/abc
