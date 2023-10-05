@@ -2,4 +2,5 @@
 *.class
 
 # exclude host logging
-orchestration/out
+*.out
+*.err
