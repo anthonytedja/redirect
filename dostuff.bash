@@ -1,13 +1,18 @@
 #!/bin/bash
 HOSTPORT=$(cat HOSTPORT)
 
-./orchestration/slopginx.py $HOSTPORT &
-slopginx=($!)
-echo "STARTING SLOPGINX $slopginx"
+CWD=$(pwd)
+cd orchestration/proxy
+make build
+java proxy.SimpleProxyServer 8000 > SimpleProxyServer.out 2> SimpleProxyServer.err &
+proxy=($!)
+cd $CWD
+
+echo "STARTING PROXY"
 
 echo "STARTING NEWBERNETES"
 ./orchestration/newbernetes.bash $HOSTPORT
 echo "KILLED NEWBERNETES"
 
-kill $slopginx
-echo "KILLED SLOPGINX"
+kill $proxy
+echo "KILLED PROXY"
