@@ -9,7 +9,7 @@ red=$(tput setaf 1)
 green=$(tput setaf 2)
 normal=$(tput sgr0)
 
-name=$(ssh $1 "ps aux | grep $grep_name | awk '{print \$12}'" 2>/dev/null)
+name=$(ssh $1 "ps aux | grep $grep_name | awk '{print \$14}'" 2>/dev/null)
 if [ "$name" = "$program_name" ] || [ "$name" = "$program_name.java" ]
 then
 	echo "(${green}o${normal}) server live"

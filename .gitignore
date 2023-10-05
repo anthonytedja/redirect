@@ -1,8 +1,5 @@
 # exclude compiled Java files
 *.class
 
-# exclude database
-database.txt
-
 # exclude host logging
 orchestration/out

@@ -1,8 +1,6 @@
 #!/bin/bash
 HOSTPORT=$(cat HOSTPORT)
 
-./storage/createDB.bash
-
 ./orchestration/slopginx.py $HOSTPORT &
 slopginx=($!)
 echo "STARTING SLOPGINX $slopginx"
