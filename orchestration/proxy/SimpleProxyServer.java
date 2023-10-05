@@ -4,14 +4,16 @@ import java.io.*;
 import java.net.*;
 
 public class SimpleProxyServer {
-  //public Map<string, string> cache = new HashMap();
+  public static Cache readcache = new Cache();
   
   public static void main(String[] args) throws IOException {
     try {
-      int localport = 8000;
-      System.out.println("Starting proxy on port " + localport);
-      runServer(localport); // never returns
-    } catch (Exception e) {
+      int hostport = Integer.parseInt(args[0]);
+      System.out.println("Starting proxy on port " + hostport);
+      runServer(hostport); // never returns
+    } catch (ArrayIndexOutOfBoundsException e) {
+			System.err.println("Usage: java SimpleProxyServer PORT");
+		} catch (Exception e) {
       System.err.println(e);
     }
   }
@@ -25,7 +27,11 @@ public class SimpleProxyServer {
     ServerSocket ss = new ServerSocket(localport);
 
     while (true) {
-      new SimpleProxyThread(ss.accept()).start();
+      new SimpleProxyThread(ss.accept(), SimpleProxyServer.readcache).start();
+      //new SimpleProxyThread(ss.accept()).start();
+
+      System.out.print("Number of active threads: " + Thread.activeCount());
+      System.out.println("\tCache size: " + readcache.size());
     }
   }
 }
