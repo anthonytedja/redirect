@@ -7,9 +7,11 @@ import java.net.Socket;
 
 /**
  * Collection of data necessary for concurrent thread work.
- * Provides a central location for each thread to obtain configurations from.
  * 
- * Maintains a queue of sockets that threads can pull from as necessary.
+ * Includes
+ * - a synchronized queue of sockets that threads can pull work from to handle client connections
+ * - a synchronized cache for storing recent requests
+ * - a synchronized write buffer for containing write data that will be persisted later on
  */
 public class ThreadWork {
 

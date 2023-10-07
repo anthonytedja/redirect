@@ -1,8 +1,8 @@
 #!/bin/bash
 # kubernetes coded by newbs
 
-rm -rf ./orchestration/out
-mkdir -p ./orchestration/out
+rm -rf ./server/out
+mkdir -p ./server/out
 
 CWD=$(pwd)
 HOSTPORT=$(cat HOSTPORT)
