@@ -9,5 +9,5 @@ printf "$NUMCOUNT ($EXPECTED_RUNTIME):\t"
 
 (
   cd util
-  ./simpleTime.bash ./curlSeq.bash $NUMCOUNT GET abc
+  ./simpleTime.bash ./curlSeq.bash $NUMCOUNT GET no
 )
