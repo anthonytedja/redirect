@@ -6,11 +6,15 @@ import java.io.*;
 import java.net.*;
 
 public class StreamUtil {
+    private static final int READ_BUF_SIZE = 1024;
+
     public BufferedReader in;
     public OutputStream out;
 
+    public String firstLine = null;
     public String inMessageString = null;
 
+    // build StreamUtil obj given a socket
     public static StreamUtil fromSocket(Socket socket) throws IOException {
         return new StreamUtil(
             new BufferedReader(
@@ -37,31 +41,28 @@ public class StreamUtil {
     //     }
     // }
 
+    // write to provided socket
     public void pipeTo(StreamUtil other) throws IOException {
         if (this.inMessageString == null) throw new IOException("pipe before readOneMessage not allowed");
         //InputStream inStringAsStream = new ByteArrayInputStream(this.inRequestString.getBytes());
         
         other.write(this.inMessageString);
         // replace this with string thing idk //this.transferInputToOutput(this.in, other.out);
-        other.out.flush();
+        //other.out.flush();
         //other.out.close(); // maybe enable this for performance but i dont think it'll do anything
     }
 
-    public void readOneMessage() throws IOException {
-        // String readString = new String(this.in.readAllBytes(), StandardCharsets.UTF_8);
-        // System.out.println(readString);
-        // this.inString = readString;
-        List<String> requestLines = new ArrayList<String>();
-        String inputLine;
-        while (!(inputLine = this.in.readLine()).equals("")){
-            requestLines.add(inputLine);
-            //System.out.println("read: " + inputLine);
-        }
-
-        this.inMessageString = String.join("\n", requestLines);
+    public void readRequest(ParsedHttpRequest request) throws IOException {
+        this.inMessageString = request.toString();
     }
 
+    public void readResponse(ParsedHttpResponse response) throws IOException {
+        this.inMessageString = response.toString();
+    }
+
+    // writes to out socket
     public void write(String text) throws IOException {
-        this.out.write(text.getBytes(StandardCharsets.UTF_8));        
+        this.out.write(text.getBytes(StandardCharsets.UTF_8));
+        this.out.flush();       
     }
 }

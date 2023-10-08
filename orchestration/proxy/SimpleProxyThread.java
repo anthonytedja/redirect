@@ -3,49 +3,28 @@ package proxy;
 import java.io.*;
 import java.net.*;
 import java.util.Random;
-import java.util.Arrays;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Date;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-public class SimpleProxyThread extends Thread{
-    private boolean VERBOSE = false;
+public class SimpleProxyThread extends Thread {
+    private boolean VERBOSE = true;
     private int HOSTPORT = 8085;
-    private List<String> HOSTS = Arrays.asList("dh2026pc01", "dh2026pc02", "dh2026pc03", "dh2026pc04");
+    
     private Socket clientSocket;
     private String HOST = null;
     private Cache readcache;
+    private ThreadWork work;
 
-    private String chooseHost() {
-        Random rand = new Random();
-        String chosen = this.HOSTS.get(rand.nextInt(this.HOSTS.size()));
-        //System.out.println("host chosen: " + chosen);
-        return chosen;
-    }
 
-    public SimpleProxyThread(Socket socket, Cache readcache) {
+    public SimpleProxyThread(Socket socket, ThreadWork work, Cache readcache) {
         this.clientSocket = socket;
         this.readcache = readcache;
-        this.HOST = this.chooseHost();
-    }
 
-    private String getCacheForRequest(String requestText) {
-        String method = HttpUtil.extractMethod(requestText);
-        if (!method.equals("GET")) return null;
+        this.work = work;
 
-        String path = HttpUtil.extractPath(requestText);
-        return this.readcache.get(path);
-    }
-
-    private void setCacheForRequest(String requestText, String responseText) {
-        String method = HttpUtil.extractMethod(requestText);
-        if (VERBOSE) System.out.println("METHOD: |" + method + "|");
-        if (!method.equals("GET")) return;
-
-        String path = HttpUtil.extractPath(requestText);
-        String redirect = HttpUtil.extractRedirect(responseText);
-
-        this.readcache.set(path, redirect);
-
-        if (VERBOSE) System.out.println("CACHE" + this.readcache);
+        this.HOST = this.work.getHostPool().getNextHostForRead("key");
     }
 
     private Socket setupServerSocket() throws IOException {
@@ -59,7 +38,7 @@ public class SimpleProxyThread extends Thread{
 
     public void run() {
         // profile test
-        long startTime = System.nanoTime();
+        //long startTime = System.nanoTime();
 
         Socket clientSocket = this.clientSocket;
         Socket serverSocket = null;
@@ -69,51 +48,52 @@ public class SimpleProxyThread extends Thread{
 
             StreamUtil clientStream = StreamUtil.fromSocket(clientSocket);
 
-            // read request - return cache if GET and already known
-            if (VERBOSE) System.out.println("Attempting to readAll client");
-            clientStream.readOneMessage();
-            if (VERBOSE) System.out.println("Done reading");
-            String clientRequestText = clientStream.inMessageString;
-            String cacheHit = this.getCacheForRequest(clientRequestText);
-
-            if (VERBOSE) System.out.println("Client request: " + clientRequestText);
-            if (true && cacheHit != null) {
-                if (VERBOSE) System.out.println("Cache hit, returning early");
-                clientStream.write(HttpUtil.formatRedirect(cacheHit));
-                return;
+            // read request - return if GET and already cached
+            ParsedHttpRequest clientRequest = new ParsedHttpRequest(clientStream.in);
+            HashMap<String, String> clientReqParams = clientRequest.getParams();
+            clientStream.readRequest(clientRequest);
+            if (VERBOSE) {
+                System.out.println(new Date() + " Client request:\n--------------\n" + clientRequest.toString() + "--------------");
             }
 
+            String cacheHit = ParsedHttpRequest.METHOD_GET.equals(clientRequest.getHttpMethod())
+                ? this.readcache.get(clientReqParams.get(ParsedHttpRequest.KEY_SHORT))
+                : null;
+            if (cacheHit != null) {
+                if (VERBOSE) System.out.println("Cache hit, returning early");
+                clientStream.write(cacheHit); // TODO: avoid caching entire server response
+                return;
+            }
             if (VERBOSE) System.out.println("NOT CACHED");
 
-            // setup server socket
+            // not in cache - need to contact server
             serverSocket = this.setupServerSocket();
             StreamUtil serverStream = StreamUtil.fromSocket(serverSocket);
 
             // forward client request to server and forward server response to client
-            if (VERBOSE) System.out.println("forwarding client to server");
+            if (VERBOSE) System.out.println("forwarding client to server " + this.HOST);
             clientStream.pipeTo(serverStream);
             
-            /*
-                problem: client buffer won't close automatically
-                server buffer closes on response
-                we need to access client buffer to get request data before talking to server
+            ParsedHttpResponse serverResponse = new ParsedHttpResponse(serverStream.in);
+            serverStream.readResponse(serverResponse);
+            if (VERBOSE) {
+                System.out.println(new Date() + " Server response:\n--------------\n" + serverResponse.toString() + "--------------");
+            }
 
-                possible solution: keep reading until we see \r\n\r\n, indicating the end of the request
-                rename readAll to readFullRequest and parse accordingly
-
-            */
-
-            // set cache for GET
-            serverStream.readOneMessage();
-            String serverResponseText = serverStream.inMessageString;
-            if (VERBOSE) System.out.println("server response: " + serverResponseText);
-            this.setCacheForRequest(clientRequestText, serverResponseText);
+            // cache if client GET was successful
+            if (ParsedHttpRequest.METHOD_GET.equals(clientRequest.getHttpMethod())
+                && ParsedHttpResponse.STATUS_307.equals(serverResponse.getStatusCode())) {
+                this.readcache.set(
+                    clientReqParams.get(ParsedHttpRequest.KEY_SHORT),
+                    serverResponse.toString()); // TODO: avoid caching entire server response
+                if (VERBOSE) {
+                    System.out.println("CACHED");
+                }
+            }
 
             // forward server response to client
             if (VERBOSE) System.out.println("forwarding server to client");
             serverStream.pipeTo(clientStream);
-
-            
         } catch (IOException e) {
             System.err.println(e);
         } finally {
@@ -124,8 +104,16 @@ public class SimpleProxyThread extends Thread{
             }
 
             // profile test
-            long endTime = System.nanoTime();
-            System.out.println(String.format("Thread took: 2%f ms", ((double) endTime - startTime) / 1000000));
+            //long endTime = System.nanoTime();
+            //System.out.println(String.format("Thread took: 2%f ms", ((double) endTime - startTime) / 1000000));
         }
+    }
+
+    private void handleClient() {
+        //
+    }
+
+    private void handleOrchestration() {
+        //
     }
 }
