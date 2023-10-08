@@ -15,9 +15,9 @@ class ParsedHttpRequest {
 
 	public static final String KEY_SHORT = "short";
 	public static final String KEY_LONG = "long";
+	public static final String KEY_NEWHOST = "newhost";
+	public static final String KEY_OLDHOST = "oldhost";
 
-	private static final Pattern PATTERN_GET_TARGET = Pattern.compile("^/([^\\?=&]+)$");
-	private static final Pattern PATTERN_PUT_TARGET = Pattern.compile("^/\\?short=(\\S+)&long=(\\S+)$");
 	private static final int MAX_BODY_SIZE = 1024; // should be enough for now
 
 	private String method;
@@ -56,18 +56,21 @@ class ParsedHttpRequest {
         String firstLine = in.readLine();
 		String[] parsedFirstLine = firstLine.split(" ", 3);
 		this.method = parsedFirstLine[0];
-		// get params
+		// get params - parsed manually through string operations
 		String target = parsedFirstLine[1];
 		if (METHOD_GET.equals(this.method)) {
-			Matcher m = PATTERN_GET_TARGET.matcher(target);
-			if (m.matches()) {
-				this.params.put(KEY_SHORT, m.group(1));
-			}
+			// expected: /param1
+			String shortURL = target.substring(1, target.length());
+			this.params.put(KEY_SHORT, shortURL);
 		} else if (METHOD_PUT.equals(this.method)) {
-			Matcher m = PATTERN_PUT_TARGET.matcher(target);
-			if (m.matches()) {
-				this.params.put(KEY_SHORT, m.group(1));
-				this.params.put(KEY_LONG, m.group(2));
+			// expected: /?param1=value1&param2=value2&...
+			if (target.indexOf('/') == 0 && target.indexOf('?') == 1) {
+				String params = target.substring(2, target.length());
+				String[] pairs = params.split("&");
+				for (String pair : pairs) {
+					String[] keyAndVal = pair.split("=");
+					this.params.put(keyAndVal[0], keyAndVal[1]);
+				}
 			}
 		}
         requestLines.add(firstLine);
