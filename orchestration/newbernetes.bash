@@ -5,7 +5,7 @@ CWD=$(pwd)
 HOSTPORT=$(cat HOSTPORT)
 
 start_server() {
-    server_pid=$(ssh $1 "cd '$CWD'; ./storage/createDBLocal.bash; ./orchestration/runServerLocal.bash $HOSTPORT")
+    server_pid=$(ssh $1 "cd '$CWD'; ./orchestration/runServerLocal.bash $HOSTPORT")
     host_to_pid[$1]=$server_pid
     echo "Started server on host $host, PID: $server_pid"
 }

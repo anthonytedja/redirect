@@ -10,12 +10,6 @@ check_hosts() {
 		host_status=$(./monitoring/checkHost.bash $host)
 		server_status=$(./monitoring/checkServer.bash $host)
 		printf "%-20s %-20s %-32s %-32s\n" "$date" "$host" "$host_status" "$server_status"
-
-		# if the host is down, start up a new server on a different host
-		if [[ $host_status == *"unreachable"* ]] || [[ $server_status == *"down"* ]]
-		then
-			./orchestration/addHost.bash $host
-		fi
 	done
 	echo "--------------------------------------------------------------------------------"
 }
