@@ -16,13 +16,15 @@ The following scripts must be called from the root folder:
   - newbernetes.bash
   - slopginx.py
 - monitoring/
-  - monitorAll.bash
+  - monitorUI.bash
+  - recovery.bash
 
 ## Initial Setup
 
 ...
 
 ### Configuration
+
 Server configurations can be adjusted in `orchestration/runServerLocal.bash`.
 Proxy configurations can be adjusted in `orchestration/proxy/runProxyLocal.bash`.
 
@@ -36,18 +38,18 @@ Run the following from root to start the system:
 
 ## API
 
-Sample GET:
-
-```bash
-curl "http://localhost:8085/arnold"
-```
-
 Sample PUT:
 
 ```bash
 curl -X PUT "http://localhost:8085?short=arnold&long=http://google.com"
 ```
 
+Sample GET:
+
+```bash
+curl "http://localhost:8085/arnold"
+```
+
 ## Monitoring
 
-The monitoring system displays the system's health for each of its host and its server. It separate from the system itself and can be run independently.
+The monitoring system displays the system's health for each of its host and its server.

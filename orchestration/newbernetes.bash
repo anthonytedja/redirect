@@ -26,6 +26,8 @@ for host in $(cat HOSTS); do
     start_server $host
 done
 
+./orchestration/monitoring/recovery.bash
+
 echo "CTRL+C to kill all servers..."
 
 # infinite loop

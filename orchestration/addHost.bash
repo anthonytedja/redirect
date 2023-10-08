@@ -14,14 +14,13 @@ else
     ssh $new_host "cd '$CWD'; ./orchestration/runServerLocal.bash $HOSTPORT >/dev/null"
 fi
 
-# If an argument is passed in, we try to replace that host with the new host
+# If an argument is passed in, we replace that host with the new host
 if [ "$1" != "" ]
 then
     sed -i "s/$1/$new_host/g" HOSTS
-    curl "http://localhost:$PROXYPORT?oldhost=$1"
+    curl "localhost:$PROXYPORT?newhost=$new_host&oldhost=$1"
 else
     # add it the end of the file on a new line
     sed -i "$ a $new_host" HOSTS
+    curl "localhost:$PROXYPORT?newhost=$new_host"
 fi
-
-curl "http://localhost:$PROXYPORT?newhost=$new_host"
