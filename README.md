@@ -22,6 +22,10 @@ The following scripts must be called from the root folder:
 
 ...
 
+### Configuration
+Server configurations can be adjusted in `orchestration/runServerLocal.bash`.
+Proxy configurations can be adjusted in `orchestration/proxy/runProxyLocal.bash`.
+
 ## System Orchestration
 
 Run the following from root to start the system:
