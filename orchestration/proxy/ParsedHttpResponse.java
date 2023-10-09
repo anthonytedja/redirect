@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.ArrayList;
 
 class ParsedHttpResponse {
+	public static final String STATUS_200= "200";
 	public static final String STATUS_307= "307";
 	public static final String STATUS_404 = "404";
 	public static final String HEADER_CONTENT_LENGTH = "Content-length";

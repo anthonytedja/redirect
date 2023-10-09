@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.Map;
 import java.util.Date;
+import java.util.List;
 
 public class SimpleProxyThread extends Thread {
     private boolean VERBOSE;
@@ -65,7 +66,7 @@ public class SimpleProxyThread extends Thread {
                     && reqParams.containsKey(ParsedHttpRequest.KEY_SHORT)) {
                     handleClientGet(requestStream, request, reqParams);
                 }
-                if (ParsedHttpRequest.METHOD_PUT.equals(request.getHttpMethod())
+                else if (ParsedHttpRequest.METHOD_PUT.equals(request.getHttpMethod())
                     && reqParams.containsKey(ParsedHttpRequest.KEY_SHORT)) {
                     handleClientPut(requestStream, request, reqParams);
                 }
@@ -85,7 +86,7 @@ public class SimpleProxyThread extends Thread {
     private void handleAddHost(Map<String, String> reqParams) {
         String addHost = reqParams.get(ParsedHttpRequest.KEY_NEWHOST);
         if (DEBUG) {
-            System.out.println("Adding host " + addHost);
+            System.out.println("Thread " + this.threadId + ": Adding host " + addHost);
             System.out.println(this.work.getHostPool());
         }
         this.work.getHostPool().addHost(addHost);
@@ -97,7 +98,7 @@ public class SimpleProxyThread extends Thread {
     private void handleRemoveHost(Map<String, String> reqParams) {
         String removeHost = reqParams.get(ParsedHttpRequest.KEY_OLDHOST);
         if (DEBUG) {
-            System.out.println("Removing host " + removeHost);
+            System.out.println("Thread " + this.threadId + ": Removing host " + removeHost);
             System.out.println(this.work.getHostPool());
         }
         this.work.getHostPool().removeHost(removeHost);
@@ -112,22 +113,22 @@ public class SimpleProxyThread extends Thread {
             String shortURL = clientReqParams.get(ParsedHttpRequest.KEY_SHORT);
             // determine server based on shortURL ???
             String host = this.work.getHostPool().getNextHostForRead(shortURL);
-            System.out.println("Selected host " + host);
+            if (DEBUG) System.out.println("Thread " + this.threadId + ": Selected host for read " + host);
 
             // return if already cached
             String cacheHit = this.work.getCache().get(clientReqParams.get(ParsedHttpRequest.KEY_SHORT));
             if (cacheHit != null) {
-                if (VERBOSE) System.out.println("Cache hit, returning early");
+                if (VERBOSE) System.out.println("Thread " + this.threadId + ": Cache HIT");
                 clientStream.write(cacheHit); // TODO: avoid caching entire server response
                 return;
             }
-            if (VERBOSE) System.out.println("NOT CACHED");
+            if (VERBOSE) System.out.println("Thread " + this.threadId + ": NOT CACHED");
 
             // not in cache - forward client request to server
             serverSocket = setupServerSocket(host);
             StreamUtil serverStream = StreamUtil.fromSocket(serverSocket);
 
-            if (DEBUG) System.out.println("forwarding client to server " + host);
+            if (DEBUG) System.out.println("Thread " + this.threadId + ": forwarding client to server " + host);
             clientStream.pipeTo(serverStream);
             
             // parse server response
@@ -143,12 +144,12 @@ public class SimpleProxyThread extends Thread {
                     clientReqParams.get(ParsedHttpRequest.KEY_SHORT),
                     serverResponse.toString()); // TODO: avoid caching entire server response
                 if (VERBOSE) {
-                    System.out.println("ADDED TO CACHE");
+                    System.out.println("Thread " + this.threadId + ": ADDED TO CACHE");
                 }
             }
 
             // forward server response to client
-            if (DEBUG) System.out.println("forwarding server " + host + " to client");
+            if (DEBUG) System.out.println("Thread " + this.threadId + ": forwarding server " + host + " to client");
             serverStream.pipeTo(clientStream);
         } finally {
             if (serverSocket != null) serverSocket.close();
@@ -156,32 +157,54 @@ public class SimpleProxyThread extends Thread {
     }
 
     private void handleClientPut(StreamUtil clientStream, ParsedHttpRequest clientRequest, Map<String, String> clientReqParams) throws IOException {
-        Socket serverSocket = null;
-        try {
-            String shortURL = clientReqParams.get(ParsedHttpRequest.KEY_SHORT);
-            // determine server based on shortURL ???
-            String host = this.work.getHostPool().getNextHostForRead(shortURL);
-            System.out.println("Selected host " + host);
+        String shortURL = clientReqParams.get(ParsedHttpRequest.KEY_SHORT);
+        
+        // replicate write across multiple hosts
+        List<String> hosts = this.work.getHostPool().getNextHostsForWrite(shortURL);
+        if (DEBUG) System.out.println("Thread " + this.threadId + ": Selected hosts for write: " + hosts);
+        ParsedHttpResponse successRes = null;
+        ParsedHttpResponse failRes = null;
 
-            // forward client request to server
-            serverSocket = setupServerSocket(host);
-            StreamUtil serverStream = StreamUtil.fromSocket(serverSocket);
+        for (String host : hosts) {
+            Socket serverSocket = null;
+            try {
+                // forward client request to server
+                serverSocket = setupServerSocket(host);
+                StreamUtil serverStream = StreamUtil.fromSocket(serverSocket);
 
-            if (DEBUG) System.out.println("forwarding client to server " + host);
-            clientStream.pipeTo(serverStream);
-            
-            // parse server response
-            ParsedHttpResponse serverResponse = new ParsedHttpResponse(serverStream.in);
-            serverStream.readResponse(serverResponse);
-            if (VERBOSE) {
-                System.out.println(new Date() + " Server response:\n--------------\n" + serverResponse.toString() + "--------------");
+                if (DEBUG) System.out.println("Thread " + this.threadId + ": forwarding client to server " + host);
+                clientStream.pipeTo(serverStream);
+                
+                // parse server response
+                ParsedHttpResponse serverResponse = new ParsedHttpResponse(serverStream.in);
+                switch (serverResponse.getStatusCode()) {
+                    case ParsedHttpResponse.STATUS_200:
+                        successRes = serverResponse;
+                        break;
+                    case ParsedHttpResponse.STATUS_404:
+                        failRes = serverResponse;
+                        break;
+                }
+                if (VERBOSE) {
+                    System.out.println(new Date() + " Server " + host + " response:\n--------------\n" + serverResponse.toString() + "--------------");
+                }
+                serverSocket.close();
+            } finally {
+                if (serverSocket != null) serverSocket.close();
             }
-
-            // forward server response to client
-            if (DEBUG) System.out.println("forwarding server " + host + " to client");
-            serverStream.pipeTo(clientStream);
-        } finally {
-            if (serverSocket != null) serverSocket.close();
         }
+
+        // forward success response to client if at least one succeeds
+        ParsedHttpResponse sendToClient = null;
+        if (successRes != null) {
+            sendToClient = successRes;
+        } else if (failRes != null) {
+            sendToClient = failRes;
+        }
+        if (sendToClient != null) {
+            if (DEBUG) System.out.println("Thread " + this.threadId + ": forwarding a server response to client");
+            clientStream.write(sendToClient.toString());
+        }
+        
     }
 }

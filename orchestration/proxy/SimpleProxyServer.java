@@ -26,14 +26,15 @@ public class SimpleProxyServer {
 			CACHE_SIZE = Integer.parseInt(args[2]);
 			NUM_THREADS = Integer.parseInt(args[3]);
 
-			System.out.println(IS_VERBOSE);
-			System.out.println(PROXY_PORT);
-			System.out.println(CACHE_SIZE);
-			System.out.println(NUM_THREADS);
+			if (IS_VERBOSE) {
+				System.out.println("Starting proxy...");
+				System.out.println("Cache size: " + CACHE_SIZE);
+				System.out.println("Number of threads: " + NUM_THREADS);
+			}
 
 			runServer();
 		} catch (ArrayIndexOutOfBoundsException e) {
-			System.err.println("Usage: java SimpleProxyServer PORT");
+			System.err.println("Usage: java SimpleProxyServer IS_VERBOSE PROXY_PORT CACHE_SIZE NUM_THREADS");
 		} catch (Exception e) {
 			System.err.println(e);
 		}
