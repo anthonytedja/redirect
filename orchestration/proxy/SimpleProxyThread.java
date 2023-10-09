@@ -10,7 +10,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class SimpleProxyThread extends Thread {
-    private boolean VERBOSE = false;
+    private boolean VERBOSE = true;
     private boolean DEBUG = true;
     
     private int hostport;

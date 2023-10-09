@@ -29,25 +29,30 @@ public class SimpleProxyServer {
 		}
 	}
 
-	private static int getHostPort() throws FileNotFoundException {
-		Scanner fileScanner = null;
-		try {
-			File file = new File("../../HOSTPORT");
-			fileScanner = new Scanner(file);
-			return Integer.parseInt(fileScanner.nextLine());
-		} catch (Exception e) {
-			throw e;
-		} finally {
-			if (fileScanner != null) fileScanner.close();
+	private static ArrayList<String> readLinesFromFile(String filepath) throws FileNotFoundException {
+		ArrayList<String> lines = new ArrayList<String>();
+		
+		File file = new File(filepath);
+		Scanner scanner = new Scanner(file);
+
+		while (scanner.hasNextLine()) {
+			lines.add(scanner.nextLine());
 		}
+
+		scanner.close();
+
+		return lines;
 	}
 
-	private static List<String> getInitialHosts() { // read from HOSTS file
-		return Arrays.asList(
-			"dh2026pc21",
-			"dh2026pc22",
-			"dh2026pc23",
-			"dh2026pc24");
+	private static int getHostPort() throws FileNotFoundException {
+		ArrayList<String> lines = readLinesFromFile("HOSTPORT");
+		return Integer.parseInt(lines.get(0));
+	}
+
+	private static ArrayList<String> getInitialHosts() throws FileNotFoundException {
+		ArrayList<String> lines = readLinesFromFile("HOSTS");
+		System.out.println("LINESLEN" + lines.size());
+		return lines;
 	}
 
 	/**
