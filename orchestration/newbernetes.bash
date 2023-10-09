@@ -4,28 +4,19 @@
 CWD=$(pwd)
 HOSTPORT=$(cat HOSTPORT)
 
-start_server() {
-    server_pid=$(ssh $1 "cd '$CWD'; ./orchestration/runServerLocal.bash $HOSTPORT")
-    host_to_pid[$1]=$server_pid
-    echo "Started server on host $host, PID: $server_pid"
-}
-
-shutdown() {
-    for host in "${!host_to_pid[@]}"; do
-        ssh $host "kill ${host_to_pid[$host]}"
-	    echo "Killed $host"
+start_all() {
+    for host in $(cat HOSTS); do
+        ssh $host "cd '$CWD'; ./orchestration/runServerLocal.bash $HOSTPORT"
+        echo "Started server on host $host"
     done
 }
 
 declare -A host_to_pid
 
 # kill all nodes when this script exits
-trap "shutdown && exit" INT
+trap "./orchestration/killAllForce.bash && exit" INT
 
-for host in $(cat HOSTS); do
-    start_server $host
-done
-
+start_all
 ./orchestration/monitoring/recovery.bash
 
 echo "CTRL+C to kill all servers..."
