@@ -1,6 +1,6 @@
 #!/bin/bash
 HOSTPORT=$(cat HOSTPORT)
-PROXYPORT=8070
+PROXYPORT=8000
 
 echo "STARTING PROXY"
 proxy=$(./orchestration/proxy/runProxyLocal.bash $PROXYPORT)
