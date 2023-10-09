@@ -44,12 +44,9 @@ public class SimpleProxyThread extends Thread {
                 ParsedHttpRequest request = new ParsedHttpRequest(requestStream.in);
                 Map<String, String> reqParams = request.getParams();
                 requestStream.readRequest(request);
-                if (DEBUG) {
-                    System.out.println(new Date() + ": Thread " + this.threadId);
-                }
                 if (VERBOSE) {
                     Date currTime = new Date();
-                    System.out.println(currTime + ": Thread " + this.threadId);
+                    System.out.println(currTime + ": Thread " + this.threadId + ": accept request");
                     System.out.println(currTime + " Client request:\n--------------\n" + request.toString() + "--------------");
                 }
 

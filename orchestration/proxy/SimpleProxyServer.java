@@ -12,7 +12,7 @@ import java.util.Date;
 
 public class SimpleProxyServer {
 	// configurable parameters
-	static boolean IS_VERBOSE = true; // toggle log statements
+	static boolean IS_VERBOSE; // toggle log statements
 	static int CACHE_SIZE; // 1; NOT USED YET
 	static int NUM_THREADS; // 4
 	static int PROXY_PORT;
