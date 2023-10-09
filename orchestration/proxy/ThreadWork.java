@@ -65,6 +65,7 @@ public class ThreadWork {
 	 */
 	class HostPool {
 		private final static int NUM_CLUSTERS = 2; // configurable?
+		private final static int MODULO = NUM_CLUSTERS - 1;
 		private Cluster[] clusters;
 
 		public HostPool() {
@@ -75,7 +76,7 @@ public class ThreadWork {
 
 		// hashing strategy used for load balancing
 		private int hash(String key) {
-			return key.hashCode() % NUM_CLUSTERS;
+			return key.hashCode() % MODULO;
 		}
 
 		// get a host from the cluster that is is the target of the next read

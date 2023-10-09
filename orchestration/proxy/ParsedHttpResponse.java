@@ -2,6 +2,7 @@ package proxy;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.util.Map;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
@@ -16,7 +17,7 @@ class ParsedHttpResponse {
 	private String protocol;
 	private String statusCode;
 
-	private HashMap<String, String> headers;
+	private Map<String, String> headers;
 
 	private String response;
 
@@ -34,7 +35,7 @@ class ParsedHttpResponse {
 		return this.statusCode;
 	}
 
-	public HashMap<String, String> getHeaders() {
+	public Map<String, String> getHeaders() {
 		return this.headers;
 	}
 

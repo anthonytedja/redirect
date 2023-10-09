@@ -1,8 +1,11 @@
 package proxy;
 
 import java.nio.charset.StandardCharsets;
-import java.io.*;
-import java.net.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.Socket;
 
 public class StreamUtil {
     public BufferedReader in;
@@ -21,32 +24,17 @@ public class StreamUtil {
         );
     }
 
-    public StreamUtil(
-        BufferedReader in,
-        OutputStream out
-    ) {
+    public StreamUtil(BufferedReader in, OutputStream out) {
         this.in = in;
         this.out = out;
     }
 
-    // private void transferInputToOutput(InputStream in, OutputStream out) throws IOException {
-    //     byte[] buffer = new byte[8192];
-    //     int bytesRead;
-
-    //     while ((bytesRead = in.read(buffer)) != -1) {
-    //         out.write(buffer, 0, bytesRead);
-    //     }
-    // }
-
     // write to provided socket
     public void pipeTo(StreamUtil other) throws IOException {
-        if (this.inMessageString == null) throw new IOException("pipe before readOneMessage not allowed");
-        //InputStream inStringAsStream = new ByteArrayInputStream(this.inRequestString.getBytes());
-        
+        if (this.inMessageString == null) {
+            throw new IOException("pipe before readOneMessage not allowed");
+        }
         other.write(this.inMessageString);
-        // replace this with string thing idk //this.transferInputToOutput(this.in, other.out);
-        //other.out.flush();
-        //other.out.close(); // maybe enable this for performance but i dont think it'll do anything
     }
 
     public void readRequest(ParsedHttpRequest request) throws IOException {

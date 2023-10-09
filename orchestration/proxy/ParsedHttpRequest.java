@@ -2,6 +2,7 @@ package proxy;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.util.Map;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
@@ -19,8 +20,8 @@ class ParsedHttpRequest {
 	private static final int MAX_BODY_SIZE = 1024; // should be enough for now
 
 	private String method;
-	private HashMap<String, String> params;
-	private HashMap<String, String> headers;
+	private Map<String, String> params;
+	private Map<String, String> headers;
 	private String request;
 
 	public ParsedHttpRequest(BufferedReader in) throws IOException {
@@ -34,11 +35,11 @@ class ParsedHttpRequest {
 		return this.method;
 	}
 
-	public HashMap<String, String> getParams() {
+	public Map<String, String> getParams() {
 		return this.params;
 	}
 
-	public HashMap<String, String> getHeaders() {
+	public Map<String, String> getHeaders() {
 		return this.headers;
 	}
 
