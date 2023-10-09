@@ -22,4 +22,4 @@ export -f urlText
 export METHOD
 export ISRANDOMPARAM
 
-seq 1 $NUMCOUNT | xargs -P4 -I{} bash -c 'URLTEXT=$(urlText); curl -s -o /dev/null -X $METHOD "http://localhost:8070/$URLTEXT"'
+seq 1 $NUMCOUNT | xargs -P4 -I{} bash -c 'URLTEXT=$(urlText); curl -s -o /dev/null -X $METHOD "http://localhost:8000/$URLTEXT"'
