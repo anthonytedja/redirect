@@ -4,6 +4,9 @@ all: build
 
 build: $(SRCS)
 	javac *.java
+	javac -d . HostPool.java
+	javac -d . SimpleHostPool.java
+	javac -d . ConsistentRingPool.java
 	javac -d . ThreadWork.java
 	javac -d . ParsedHttpRequest.java
 	javac -d . ParsedHttpResponse.java
