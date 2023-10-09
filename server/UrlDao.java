@@ -6,6 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Map;
 
 public class UrlDao {
 	private String dbPath;
@@ -33,12 +34,8 @@ public class UrlDao {
 				longURL = rs.getString("url_original");
 			}
 		} finally {
-			try {
-				if (conn != null) {
-					conn.close();
-				}
-			} catch (SQLException ex) {
-				System.out.println(ex.getMessage());
+			if (conn != null) {
+				conn.close();
 			}
 		}
 		return longURL;
@@ -68,12 +65,35 @@ public class UrlDao {
 			ps.execute();
 
 		} finally {
-			try {
-				if (conn != null) {
-					conn.close();
-				}
-			} catch (SQLException ex) {
-				System.out.println(ex.getMessage());
+			if (conn != null) {
+				conn.close();
+			}
+		}
+	}
+
+	public void saveBatch(Map<String, String> shortToLong) throws SQLException {
+		Connection conn = null;
+		try {
+			conn = connect(this.dbPath);
+			String sql = """
+					 	pragma journal_mode = WAL;
+						pragma synchronous = normal;
+					""";
+			Statement stmt = conn.createStatement();
+			stmt.executeUpdate(sql);
+
+			String updateSQL = "INSERT OR REPLACE INTO urls (short_code, url_original) VALUES (?, ?);";
+			PreparedStatement ps = conn.prepareStatement(updateSQL);
+			
+			for (String key : shortToLong.keySet()) {
+				ps.setString(1, key);
+				ps.setString(2, shortToLong.get(key));
+				ps.addBatch();
+			}
+			ps.executeBatch();
+		} finally {
+			if (conn != null) {
+				conn.close();
 			}
 		}
 	}
