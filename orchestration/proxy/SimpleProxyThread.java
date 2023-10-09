@@ -108,59 +108,86 @@ public class SimpleProxyThread extends Thread {
     }
 
     private void handleClientGet(StreamUtil clientStream, ParsedHttpRequest clientRequest, Map<String, String> clientReqParams) throws IOException {
-        Socket serverSocket = null;
-        try {
-            String shortURL = clientReqParams.get(ParsedHttpRequest.KEY_SHORT);
-            // determine server based on shortURL ???
-            String host = this.work.getHostPool().getNextHostForRead(shortURL);
-            if (DEBUG) System.out.println("Thread " + this.threadId + ": Selected host for read " + host);
+        String shortURL = clientReqParams.get(ParsedHttpRequest.KEY_SHORT);
 
-            // return if already cached
-            String cacheHit = this.work.getCache().get(clientReqParams.get(ParsedHttpRequest.KEY_SHORT));
-            if (cacheHit != null) {
-                if (VERBOSE) System.out.println("Thread " + this.threadId + ": Cache HIT");
-                clientStream.write(cacheHit); // TODO: avoid caching entire server response
-                return;
-            }
-            if (VERBOSE) System.out.println("Thread " + this.threadId + ": NOT CACHED");
+        // return if already cached
+        String cacheHit = this.work.getCache().get(clientReqParams.get(ParsedHttpRequest.KEY_SHORT));
+        if (cacheHit != null) {
+            if (VERBOSE) System.out.println("Thread " + this.threadId + ": CACHE HIT");
+            clientStream.write(cacheHit); // TODO: avoid caching entire server response
+            return;
+        }
+        if (VERBOSE) System.out.println("Thread " + this.threadId + ": CACHE MISS");
 
-            // not in cache - forward client request to server
-            serverSocket = setupServerSocket(host);
-            StreamUtil serverStream = StreamUtil.fromSocket(serverSocket);
+        // check for data across replicated hosts
+        List<String> hosts = this.work.getHostPool().getHosts(shortURL);
+        if (DEBUG) System.out.println("Thread " + this.threadId + ": Selected hosts for read " + hosts);
+        ParsedHttpResponse successRes = null;
+        ParsedHttpResponse failRes = null;
 
-            if (DEBUG) System.out.println("Thread " + this.threadId + ": forwarding client to server " + host);
-            clientStream.pipeTo(serverStream);
-            
-            // parse server response
-            ParsedHttpResponse serverResponse = new ParsedHttpResponse(serverStream.in);
-            serverStream.readResponse(serverResponse);
-            if (VERBOSE) {
-                System.out.println(new Date() + " Server response:\n--------------\n" + serverResponse.toString() + "--------------");
-            }
+        for (String host : hosts) {
+            Socket serverSocket = null;
+            try {
+                // forward client request to server
+                serverSocket = setupServerSocket(host);
+                StreamUtil serverStream = StreamUtil.fromSocket(serverSocket);
 
-            // cache if client GET was successful
-            if (ParsedHttpResponse.STATUS_307.equals(serverResponse.getStatusCode())) {
-                this.work.getCache().put(
-                    clientReqParams.get(ParsedHttpRequest.KEY_SHORT),
-                    serverResponse.toString()); // TODO: avoid caching entire server response
+                if (DEBUG) System.out.println("Thread " + this.threadId + ": forwarding client to server " + host);
+                clientStream.pipeTo(serverStream);
+                
+                // parse server response
+                ParsedHttpResponse serverResponse = new ParsedHttpResponse(serverStream.in);
+                switch (serverResponse.getStatusCode()) {
+                    case ParsedHttpResponse.STATUS_307:
+                        successRes = serverResponse;
+
+                        // cache if client GET was successful
+                        this.work.getCache().put(
+                            clientReqParams.get(ParsedHttpRequest.KEY_SHORT),
+                            serverResponse.toString()); // TODO: avoid caching entire server response
+                        if (VERBOSE) {
+                            System.out.println("Thread " + this.threadId + ": CACHE UPDATE");
+                        }
+                        break;
+                    case ParsedHttpResponse.STATUS_404:
+                        failRes = serverResponse;
+                        break;
+                }
                 if (VERBOSE) {
-                    System.out.println("Thread " + this.threadId + ": ADDED TO CACHE");
+                    System.out.println(new Date() + " Server response:\n--------------\n" + serverResponse.toString() + "--------------");
+                }
+                serverSocket.close();
+            } catch (Exception e) {
+                System.err.println("Thread " + this.threadId + ": socket error for host " + host);
+                System.err.println(e);
+            } finally {
+                if (serverSocket != null) serverSocket.close();
+                
+                // return first successful response
+                if (successRes != null) {
+                    break;
                 }
             }
+        }
 
-            // forward server response to client
-            if (DEBUG) System.out.println("Thread " + this.threadId + ": forwarding server " + host + " to client");
-            serverStream.pipeTo(clientStream);
-        } finally {
-            if (serverSocket != null) serverSocket.close();
+        // forward success response to client if at least one succeeds
+        ParsedHttpResponse sendToClient = null;
+        if (successRes != null) {
+            sendToClient = successRes;
+        } else if (failRes != null) {
+            sendToClient = failRes;
+        }
+        if (sendToClient != null) {
+            if (DEBUG) System.out.println("Thread " + this.threadId + ": forwarding a server response to client");
+            clientStream.write(sendToClient.toString());
         }
     }
 
     private void handleClientPut(StreamUtil clientStream, ParsedHttpRequest clientRequest, Map<String, String> clientReqParams) throws IOException {
         String shortURL = clientReqParams.get(ParsedHttpRequest.KEY_SHORT);
         
-        // replicate write across multiple hosts
-        List<String> hosts = this.work.getHostPool().getNextHostsForWrite(shortURL);
+        // perform write across replicated hosts
+        List<String> hosts = this.work.getHostPool().getHosts(shortURL);
         if (DEBUG) System.out.println("Thread " + this.threadId + ": Selected hosts for write: " + hosts);
         ParsedHttpResponse successRes = null;
         ParsedHttpResponse failRes = null;
@@ -181,7 +208,7 @@ public class SimpleProxyThread extends Thread {
                     case ParsedHttpResponse.STATUS_200:
                         successRes = serverResponse;
                         break;
-                    case ParsedHttpResponse.STATUS_404:
+                    case ParsedHttpResponse.STATUS_404: // not triggered?
                         failRes = serverResponse;
                         break;
                 }
@@ -189,6 +216,9 @@ public class SimpleProxyThread extends Thread {
                     System.out.println(new Date() + " Server " + host + " response:\n--------------\n" + serverResponse.toString() + "--------------");
                 }
                 serverSocket.close();
+            } catch (Exception e) {
+                System.err.println("Thread " + this.threadId + ": socket error for host " + host);
+                System.err.println(e);
             } finally {
                 if (serverSocket != null) serverSocket.close();
             }
@@ -205,6 +235,5 @@ public class SimpleProxyThread extends Thread {
             if (DEBUG) System.out.println("Thread " + this.threadId + ": forwarding a server response to client");
             clientStream.write(sendToClient.toString());
         }
-        
     }
 }
