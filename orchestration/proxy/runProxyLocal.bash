@@ -1,5 +1,4 @@
 #!/bin/bash
-set -x
 PROXYPORT=$1
 JAVA="/opt/jdk-20.0.1/bin/java"
 OUTDIR="./orchestration/proxy/out"
