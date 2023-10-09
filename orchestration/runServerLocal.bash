@@ -14,7 +14,7 @@ SLEEP_DURATION=60000
 
 
 if [ ! -f /virtual/$USER/URLShortner/data.db ]; then
-    ../storage/createDBLocal.bash 10
+    ./storage/createDBLocal.bash 10
 fi
 
 cd server
@@ -22,5 +22,5 @@ rm -rf $OUTDIR
 mkdir -p $OUTDIR
 #make build
 
-nohup $JAVA -classpath ".:../storage/sqlite-jdbc-3.39.3.0.jar" server.URLShortnerOptimized $IS_VERBOSE $HOSTPORT $DB_PATH $CACHE_SIZE $WRITE_BUFFER_SIZE $NUM_THREADS $SLEEP_DURATION > $OUTDIR/$HOSTNAME.out 2> $OUTDIR/$HOSTNAME.err </dev/null &
+nohup $JAVA -classpath ".:./storage/sqlite-jdbc-3.39.3.0.jar" server.URLShortnerOptimized $IS_VERBOSE $HOSTPORT $DB_PATH $CACHE_SIZE $WRITE_BUFFER_SIZE $NUM_THREADS $SLEEP_DURATION > $OUTDIR/$HOSTNAME.out 2> $OUTDIR/$HOSTNAME.err </dev/null &
 echo $! >&1
