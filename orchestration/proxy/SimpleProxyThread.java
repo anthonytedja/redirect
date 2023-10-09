@@ -12,16 +12,17 @@ import java.util.regex.Pattern;
 public class SimpleProxyThread extends Thread {
     private boolean VERBOSE = false;
     private boolean DEBUG = true;
-    private int HOSTPORT = 8085;
     
+    private int hostport;
     private Socket clientSocket;
     private String HOST = null;
     private Cache readcache;
     private ThreadWork work;
 
 
-    public SimpleProxyThread(Socket socket, ThreadWork work, Cache readcache) {
+    public SimpleProxyThread(Socket socket, int hostport, ThreadWork work, Cache readcache) {
         this.clientSocket = socket;
+        this.hostport = hostport;
         this.readcache = readcache;
 
         this.work = work;
@@ -29,9 +30,9 @@ public class SimpleProxyThread extends Thread {
 
     private Socket setupServerSocket() throws IOException {
         try {
-            return new Socket(this.HOST, HOSTPORT);
+            return new Socket(this.HOST, this.hostport);
         } catch (IOException e) {
-            System.err.println("Proxy server cannot connect to " + this.HOST + ":" + HOSTPORT + ":\n" + e);
+            System.err.println("Proxy server cannot connect to " + this.HOST + ":" + this.hostport + ":\n" + e);
             throw e;
         }
     }
