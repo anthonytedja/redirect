@@ -42,7 +42,6 @@ class URLShortnerWorker implements Runnable {
 	public void run() {
 		// wait for socket to become available - check socket queue
 		while (true) {
-			// synchronization mechanisms force threads to wait until a socket becomes available
 			try {
 				Socket newClient = work.getQueue().dequeue();
 				handle(newClient);

@@ -1,5 +1,3 @@
-HOSTPORT=$1
-
 JAVA="/opt/jdk-20.0.1/bin/java"
 HOSTNAME=$(hostname)
 OUTDIR="./out"
@@ -7,6 +5,7 @@ DB_PATH="jdbc:sqlite:/virtual/$USER/URLShortner/data.db"
 
 # server configuration
 IS_VERBOSE=True
+HOSTPORT=$1
 CACHE_SIZE=1
 WRITE_BUFFER_SIZE=1000
 NUM_THREADS=4

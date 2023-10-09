@@ -44,7 +44,7 @@ public class URLShortnerOptimized {
 			try (ServerSocket serverConnect = new ServerSocket(PORT)) {
 				System.out.println(new Date() + ": Server started.\nListening for connections on port : " + PORT + " ...\n");
 
-				// we listen until user halts server execution
+				// listen until user halts server execution
 				while (true) {
 					Socket socket = serverConnect.accept();
 					work.getQueue().enqueue(socket);

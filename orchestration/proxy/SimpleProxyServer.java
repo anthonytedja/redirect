@@ -12,16 +12,24 @@ import java.util.Date;
 
 public class SimpleProxyServer {
 	// configurable parameters
-	static boolean IS_VERBOSE = false; // toggle log statements
-	static int CACHE_SIZE = 500; // 1; NOT USED YET
-	static int NUM_THREADS = 4; // 4
+	static boolean IS_VERBOSE = true; // toggle log statements
+	static int CACHE_SIZE; // 1; NOT USED YET
+	static int NUM_THREADS; // 4
 	static int PROXY_PORT;
 	static int HOST_PORT;
 
 	public static void main(String[] args) {
 		try {
-			PROXY_PORT = Integer.parseInt(args[0]);
+			IS_VERBOSE = Boolean.parseBoolean(args[0]);
+			PROXY_PORT = Integer.parseInt(args[1]);
 			HOST_PORT = getHostPort();
+			CACHE_SIZE = Integer.parseInt(args[2]);
+			NUM_THREADS = Integer.parseInt(args[3]);
+
+			System.out.println(IS_VERBOSE);
+			System.out.println(PROXY_PORT);
+			System.out.println(CACHE_SIZE);
+			System.out.println(NUM_THREADS);
 
 			runServer();
 		} catch (ArrayIndexOutOfBoundsException e) {
@@ -53,7 +61,6 @@ public class SimpleProxyServer {
 
 	private static List<String> getInitialHosts() throws FileNotFoundException {
 		List<String> lines = readLinesFromFile("HOSTS");
-		System.out.println("LINESLEN" + lines.size());
 		return lines;
 	}
 
@@ -82,7 +89,7 @@ public class SimpleProxyServer {
 		ServerSocket serverConnect = new ServerSocket(PROXY_PORT);
 		System.out.println(new Date() + ": Proxy started.\nListening for connections on port : " + PROXY_PORT + " ...\n");
 
-		// we listen until user halts server execution
+		// listen until user halts server execution
 		while (true) {
 			Socket socket = serverConnect.accept();
 			work.getQueue().enqueue(socket);
