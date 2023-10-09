@@ -1,11 +1,12 @@
+#!/bin/bash
+set -x
 PROXYPORT=$1
 JAVA="/opt/jdk-20.0.1/bin/java"
-OUTDIR="./out"
+OUTDIR="./orchestration/proxy/out"
 
-cd orchestration/proxy
 rm -rf $OUTDIR
 mkdir -p $OUTDIR
-make build > /dev/null
+make build -C orchestration/proxy > /dev/null
 
-$JAVA proxy.SimpleProxyServer $PROXYPORT > $OUTDIR/SimpleProxyServer.out 2> $OUTDIR/SimpleProxyServer.err &
+$JAVA -cp orchestration/proxy proxy.SimpleProxyServer $PROXYPORT > $OUTDIR/SimpleProxyServer.out 2> $OUTDIR/SimpleProxyServer.err &
 echo $! >&1
