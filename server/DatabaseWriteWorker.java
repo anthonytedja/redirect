@@ -2,6 +2,7 @@ package server;
 
 import java.util.HashMap;
 import java.util.Date;
+import java.sql.SQLException;
 
 class DatabaseWriteWorker implements Runnable {
 	private ThreadWork work;
@@ -27,12 +28,14 @@ class DatabaseWriteWorker implements Runnable {
 				flushBuffer(buffer);
 			} catch (InterruptedException e) {
 				System.out.println(e);
+			} catch (Exception e) {
+				System.out.println(e);
 			}
 		}
 	}
 
 	// flush write cache to database
-	private void flushBuffer(HashMap<String, String> buffer) {
+	private void flushBuffer(HashMap<String, String> buffer) throws SQLException {
 		for (String key : buffer.keySet()) {
 			this.work.getUrlDao().save(key, buffer.get(key));
 		}

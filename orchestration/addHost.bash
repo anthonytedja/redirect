@@ -1,6 +1,10 @@
+# 1 = host to remove, empty = don't swap an existing database
+# 2 = host to clone db from, empty = start with new database
+# selects a random host from HOSTSALL
+
 CWD=$(pwd)
 HOSTPORT=$(cat HOSTPORT)
-PROXYPORT=8000
+PROXYPORT=8070
 
 # find a new host from HOSTSALL that is not already in HOSTS
 new_host=$(grep -v -f HOSTS HOSTSALL | shuf -n 1)
@@ -18,9 +22,9 @@ fi
 if [ "$1" != "" ]
 then
     sed -i "s/$1/$new_host/g" HOSTS
-    curl "localhost:$PROXYPORT?newhost=$new_host&oldhost=$1"
+    curl -X PUT "http://localhost:$PROXYPORT/?newhost=$new_host&oldhost=$1"
 else
     # add it the end of the file on a new line
     sed -i "$ a $new_host" HOSTS
-    curl "localhost:$PROXYPORT?newhost=$new_host"
+    curl -X PUT "http://localhost:$PROXYPORT/?newhost=$new_host"
 fi

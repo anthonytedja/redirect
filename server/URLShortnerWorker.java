@@ -22,7 +22,7 @@ class URLShortnerWorker implements Runnable {
 	static final String NOT_FOUND = "../notfound.html";
 
 	// verbose mode
-	private boolean verbose;
+	private boolean VERBOSE;
 
 	private int threadId;
 	private ThreadWork work;
@@ -31,12 +31,12 @@ class URLShortnerWorker implements Runnable {
 
 	// specify 0 for no cache/buffer
 	public URLShortnerWorker(int threadId, ThreadWork work, boolean verbose) {
+		this.VERBOSE = verbose;
+
 		this.threadId = threadId;
 		this.work = work;
 		this.isCacheEnabled = work.getCache().getMaxSize() <= 0 ? false : true; // disable if specified size is <= 0
 		this.isWriteBufferEnabled = work.getWriteBuffer().getMaxSize() <= 0 ? false : true;
-
-		this.verbose = verbose;
 	}
 	
 	public void run() {
@@ -64,7 +64,7 @@ class URLShortnerWorker implements Runnable {
 
 			String input = in.readLine();
 
-			if (verbose) {
+			if (VERBOSE) {
 				System.out.println(new Date() + ": Thread " + this.threadId + ": " + input);
 			}
 			Pattern pput = Pattern.compile("^PUT\\s+/\\?short=(\\S+)&long=(\\S+)\\s+(\\S+)$");
@@ -169,7 +169,7 @@ class URLShortnerWorker implements Runnable {
 				System.err.println("Error closing stream : " + e.getMessage());
 			}
 
-			if (verbose) {
+			if (VERBOSE) {
 				System.out.println(new Date() + ": Thread " + this.threadId + ": Connection closed");
 			}
 		}

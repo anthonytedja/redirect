@@ -1,13 +1,10 @@
 package proxy;
 
 import java.nio.charset.StandardCharsets;
-import java.util.*;
 import java.io.*;
 import java.net.*;
 
 public class StreamUtil {
-    private static final int READ_BUF_SIZE = 1024;
-
     public BufferedReader in;
     public OutputStream out;
 

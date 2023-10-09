@@ -14,18 +14,13 @@ public class UrlDao {
 		this.dbPath = dbPath;
 	}
 
-	private Connection connect(String url) {
-		Connection conn = null;
-		try {
-			conn = DriverManager.getConnection(url);
-		} catch (SQLException e) {
-			System.out.println(e.getMessage());
-		}
+	private Connection connect(String url) throws SQLException {
+		Connection conn = DriverManager.getConnection(url);
 		return conn;
 	}
 
 	// obtain the full URL given a shortened URL
-	public String find(String shortURL) {
+	public String find(String shortURL) throws SQLException {
 		String longURL = null;
 		Connection conn = null;
 		try {
@@ -37,8 +32,6 @@ public class UrlDao {
 			if (rs.next()) {
 				longURL = rs.getString("url_original");
 			}
-		} catch (SQLException e) {
-			System.out.println(e.getMessage());
 		} finally {
 			try {
 				if (conn != null) {
@@ -52,7 +45,7 @@ public class UrlDao {
 	}
 
 	// persist the short and long URLs
-	public void save(String shortURL, String longURL) {
+	public void save(String shortURL, String longURL) throws SQLException {
 		Connection conn = null;
 		try {
 			conn = connect(this.dbPath);
@@ -74,8 +67,6 @@ public class UrlDao {
 			ps.setString(2, longURL);
 			ps.execute();
 
-		} catch (SQLException e) {
-			System.out.println(e.getMessage());
 		} finally {
 			try {
 				if (conn != null) {

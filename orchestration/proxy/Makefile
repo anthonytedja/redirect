@@ -1,10 +1,9 @@
 SRCS = SimpleProxyServer.java SimpleProxyThread.java
 
-all: build execute
+all: build
 
 build: $(SRCS)
 	javac *.java
-	javac -d . Cache.java
 	javac -d . ThreadWork.java
 	javac -d . ParsedHttpRequest.java
 	javac -d . ParsedHttpResponse.java
@@ -12,6 +11,3 @@ build: $(SRCS)
 	javac -d . StreamUtil.java
 	javac -d . SimpleProxyThread.java
 	javac -d . SimpleProxyServer.java
-
-execute:
-	java proxy.SimpleProxyServer

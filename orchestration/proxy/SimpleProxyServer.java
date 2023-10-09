@@ -1,27 +1,29 @@
 package proxy;
 
-import java.io.*;
-import java.net.*;
-import java.util.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Scanner;
+import java.util.Date;
 
 public class SimpleProxyServer {
-	public static Cache readcache = new Cache();
-
 	// configurable parameters
-	static boolean IS_VERBOSE; // toggle log statements
-	static String DB_PATH;
-	static int CACHE_SIZE; // 1; NOT USED YET
-	static int WRITE_BUFFER_SIZE; // 1000; NOT USED YET
-	static int NUM_THREADS; // 4
-	static int SLEEP_DURATION; // 60000; 1 min
+	static boolean IS_VERBOSE = false; // toggle log statements
+	static int CACHE_SIZE = 500; // 1; NOT USED YET
+	static int NUM_THREADS = 4; // 4
+	static int PROXY_PORT;
+	static int HOST_PORT;
 
-
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) {
 		try {
-			int PROXY_PORT = Integer.parseInt(args[0]);
-			int HOST_PORT = getHostPort();
-			System.out.println(new Date() + ": Starting proxy on port " + PROXY_PORT + " with hostport " + HOST_PORT);
-			runServer(PROXY_PORT, HOST_PORT); // never returns
+			PROXY_PORT = Integer.parseInt(args[0]);
+			HOST_PORT = getHostPort();
+
+			runServer();
 		} catch (ArrayIndexOutOfBoundsException e) {
 			System.err.println("Usage: java SimpleProxyServer PORT");
 		} catch (Exception e) {
@@ -29,8 +31,8 @@ public class SimpleProxyServer {
 		}
 	}
 
-	private static ArrayList<String> readLinesFromFile(String filepath) throws FileNotFoundException {
-		ArrayList<String> lines = new ArrayList<String>();
+	private static List<String> readLinesFromFile(String filepath) throws FileNotFoundException {
+		List<String> lines = new ArrayList<String>();
 		
 		File file = new File(filepath);
 		Scanner scanner = new Scanner(file);
@@ -45,12 +47,12 @@ public class SimpleProxyServer {
 	}
 
 	private static int getHostPort() throws FileNotFoundException {
-		ArrayList<String> lines = readLinesFromFile("HOSTPORT");
+		List<String> lines = readLinesFromFile("HOSTPORT");
 		return Integer.parseInt(lines.get(0));
 	}
 
-	private static ArrayList<String> getInitialHosts() throws FileNotFoundException {
-		ArrayList<String> lines = readLinesFromFile("HOSTS");
+	private static List<String> getInitialHosts() throws FileNotFoundException {
+		List<String> lines = readLinesFromFile("HOSTS");
 		System.out.println("LINESLEN" + lines.size());
 		return lines;
 	}
@@ -59,23 +61,34 @@ public class SimpleProxyServer {
 	 * runs a single-threaded proxy server on
 	 * the specified local port. It never returns.
 	 */
-	public static void runServer(int localport, int hostport) throws IOException {
-		// Create a ServerSocket to listen for connections with
-		ServerSocket ss = new ServerSocket(localport);
+	private static void runServer() throws IOException, InterruptedException {
+		ThreadWork work = new ThreadWork(CACHE_SIZE);
 
 		List<String> hosts = getInitialHosts();
-		ThreadWork work = new ThreadWork();
 		for (String host : hosts) {
 			work.getHostPool().addHost(host);
 		}
+		if (IS_VERBOSE) {
+			System.out.println(work.getHostPool());
+		}
 
-		System.out.println(work.getHostPool());
+		// start up worker threads to handle general URL shortening functionality
+		Thread[] worker = new Thread[NUM_THREADS];
+		for (int i = 0; i < NUM_THREADS; i++) {
+			worker[i] = new SimpleProxyThread(i, work, HOST_PORT, IS_VERBOSE);
+			worker[i].start();
+		}
+		
+		ServerSocket serverConnect = new ServerSocket(PROXY_PORT);
+		System.out.println(new Date() + ": Proxy started.\nListening for connections on port : " + PROXY_PORT + " ...\n");
 
+		// we listen until user halts server execution
 		while (true) {
-			new SimpleProxyThread(ss.accept(), hostport, work, SimpleProxyServer.readcache).start();
-
-			System.out.print(new Date() + ": Number of active threads: " + Thread.activeCount());
-			System.out.println("\tCache size: " + readcache.size());
+			Socket socket = serverConnect.accept();
+			work.getQueue().enqueue(socket);
+			if (IS_VERBOSE) {
+				System.out.println(new Date() + ": Connection opened");
+			}
 		}
 	}
 }

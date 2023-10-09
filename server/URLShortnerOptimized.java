@@ -7,6 +7,7 @@ import java.util.Date;
 
 public class URLShortnerOptimized {
 
+	// configurable parameters
 	static boolean IS_VERBOSE; // toggle log statements
 	static int PORT;
 	static String DB_PATH;
@@ -15,7 +16,7 @@ public class URLShortnerOptimized {
 	static int NUM_THREADS; // 4
 	static int SLEEP_DURATION; // 60000; 1 min
 
-	public static void main(String[] args) throws InterruptedException {
+	public static void main(String[] args) {
 		try {
 			IS_VERBOSE = Boolean.parseBoolean(args[0]);
 			PORT = Integer.parseInt(args[1]);
@@ -45,17 +46,19 @@ public class URLShortnerOptimized {
 
 				// we listen until user halts server execution
 				while (true) {
+					Socket socket = serverConnect.accept();
+					work.getQueue().enqueue(socket);
 					if (IS_VERBOSE) {
 						System.out.println(new Date() + ": Connection opened");
 					}
-					//handle(serverConnect.accept(), DBPath);
-					work.getQueue().enqueue(serverConnect.accept());
 				}
 			}
 		} catch (IOException e) {
 			System.err.println(new Date() + ": Server Connection error : " + e.getMessage());
 		} catch (ArrayIndexOutOfBoundsException e) {
 			System.err.println("Usage: java [SQLITE JAR CLASSPATH] URLShortner.java [PORT] [JDBC DB URL]");
+		} catch (Exception e) {
+			System.err.println(new Date() + e.getMessage());
 		}
 	}
 }

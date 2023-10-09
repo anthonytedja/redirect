@@ -1,47 +1,52 @@
 package proxy;
 
-import java.io.*;
-import java.net.*;
-import java.util.Random;
+import java.io.IOException;
+import java.net.Socket;
 import java.util.Map;
-import java.util.HashMap;
 import java.util.Date;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class SimpleProxyThread extends Thread {
-    private boolean VERBOSE = true;
-    private boolean DEBUG = true;
+    private boolean VERBOSE;
+    private boolean DEBUG = true; // use for debugging load balancing
+    private int HOST_PORT;
     
-    private int hostport;
-    private Socket clientSocket;
-    private String HOST = null;
-    private Cache readcache;
+    private int threadId;
     private ThreadWork work;
 
 
-    public SimpleProxyThread(Socket socket, int hostport, ThreadWork work, Cache readcache) {
-        this.clientSocket = socket;
-        this.hostport = hostport;
-        this.readcache = readcache;
-
+    public SimpleProxyThread(int threadId, ThreadWork work, int hostport, boolean verbose) {
+        this.VERBOSE = verbose;
+        this.HOST_PORT = hostport;
+        
+        this.threadId = threadId;
         this.work = work;
     }
 
-    private Socket setupServerSocket() throws IOException {
+    private Socket setupServerSocket(String host) throws IOException {
         try {
-            return new Socket(this.HOST, this.hostport);
+            return new Socket(host, this.HOST_PORT);
         } catch (IOException e) {
-            System.err.println("Proxy server cannot connect to " + this.HOST + ":" + this.hostport + ":\n" + e);
+            System.err.println("Proxy server cannot connect to " + host + ":" + this.HOST_PORT + ":\n" + e);
             throw e;
         }
     }
 
     public void run() {
+        // wait for socket to become available - check socket queue
+		while (true) {
+			// synchronization mechanisms force threads to wait until a socket becomes available
+			try {
+				Socket newClient = work.getQueue().dequeue();
+				handle(newClient);
+			} catch (InterruptedException e) {
+				System.out.println(e);
+			}
+		}
+    }
+
+    public void handle(Socket clientSocket) {
         // profile test
         //long startTime = System.nanoTime();
-
-        Socket clientSocket = this.clientSocket;
         try {  
             StreamUtil requestStream = StreamUtil.fromSocket(clientSocket);
 
@@ -49,8 +54,13 @@ public class SimpleProxyThread extends Thread {
             ParsedHttpRequest request = new ParsedHttpRequest(requestStream.in);
             Map<String, String> reqParams = request.getParams();
             requestStream.readRequest(request);
+            if (DEBUG) {
+                System.out.println(new Date() + ": Thread " + this.threadId);
+            }
             if (VERBOSE) {
-                System.out.println(new Date() + " Client request:\n--------------\n" + request.toString() + "--------------");
+                Date currTime = new Date();
+                System.out.println(currTime + ": Thread " + this.threadId);
+                System.out.println(currTime + " Client request:\n--------------\n" + request.toString() + "--------------");
             }
 
             // for now, parsing is done by examining the first line of the request
@@ -112,11 +122,11 @@ public class SimpleProxyThread extends Thread {
         try {
             String shortURL = clientReqParams.get(ParsedHttpRequest.KEY_SHORT);
             // determine server based on shortURL ???
-            this.HOST = this.work.getHostPool().getNextHostForRead(ParsedHttpRequest.KEY_SHORT);
-            System.out.println("Selected host " + this.HOST);
+            String host = this.work.getHostPool().getNextHostForRead(shortURL);
+            System.out.println("Selected host " + host);
 
             String cacheHit = ParsedHttpRequest.METHOD_GET.equals(clientRequest.getHttpMethod())
-                ? this.readcache.get(clientReqParams.get(ParsedHttpRequest.KEY_SHORT))
+                ? this.work.getCache().get(clientReqParams.get(ParsedHttpRequest.KEY_SHORT))
                 : null;
             if (cacheHit != null) {
                 if (VERBOSE) System.out.println("Cache hit, returning early");
@@ -126,11 +136,11 @@ public class SimpleProxyThread extends Thread {
             if (VERBOSE) System.out.println("NOT CACHED");
 
             // not in cache - need to contact server
-            serverSocket = this.setupServerSocket();
+            serverSocket = setupServerSocket(host);
             StreamUtil serverStream = StreamUtil.fromSocket(serverSocket);
 
             // forward client request to server and forward server response to client
-            if (DEBUG) System.out.println("forwarding client to server " + this.HOST);
+            if (DEBUG) System.out.println("forwarding client to server " + host);
             clientStream.pipeTo(serverStream);
             
             ParsedHttpResponse serverResponse = new ParsedHttpResponse(serverStream.in);
@@ -142,7 +152,7 @@ public class SimpleProxyThread extends Thread {
             // cache if client GET was successful
             if (ParsedHttpRequest.METHOD_GET.equals(clientRequest.getHttpMethod())
                 && ParsedHttpResponse.STATUS_307.equals(serverResponse.getStatusCode())) {
-                this.readcache.set(
+                this.work.getCache().put(
                     clientReqParams.get(ParsedHttpRequest.KEY_SHORT),
                     serverResponse.toString()); // TODO: avoid caching entire server response
                 if (VERBOSE) {
@@ -151,7 +161,7 @@ public class SimpleProxyThread extends Thread {
             }
 
             // forward server response to client
-            if (DEBUG) System.out.println("forwarding server " + this.HOST + " to client");
+            if (DEBUG) System.out.println("forwarding server " + host + " to client");
             serverStream.pipeTo(clientStream);
         } catch (IOException e) {
             System.err.println(e);
