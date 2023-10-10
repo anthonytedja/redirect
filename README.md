@@ -261,3 +261,9 @@ TODO: Add performance tests and graphs and save that data in the `report` direct
 ## Analysis
 
 TODO: Talk about the system with respect to considerations.
+
+## Tools used
+
+For performance testing, we used ab (apache benchmark). Our usage of this tool was very simple as it was just a load test.
+
+For correctness tests, we used curl to send requests and bash to validate the responses automatically.
