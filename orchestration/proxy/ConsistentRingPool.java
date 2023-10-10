@@ -8,16 +8,16 @@ import java.lang.Math;
 
 /**
  * A load balancing system that utilized consistent hashing.
- * Currently hashes without evenly spaced partions between servers.
+ * Currently hashes without evenly spaced partitions between servers.
  */
 public class ConsistentRingPool implements HostPool {
-	private static final int NUM_SLOTS = 360; // number of virtual paritions/slots on the ring
+	private static final int NUM_SLOTS = 360; // number of virtual partitions/slots on the ring
 	private static final int SLOTS_PER_HOST = 3; // number of slots each host occupies
 
 	MessageDigest md;
 	List<List<String>> ring; // map number within interval [0, NUM_SLOTS] to a list of hosts
 	int replicationFactor; // number of hosts to store data on (1 = no replication, 2 = two replicas, ...)
-	
+
 	public ConsistentRingPool(int replicationFactor) {
 		try {
 			this.md = MessageDigest.getInstance("MD5");
@@ -38,9 +38,9 @@ public class ConsistentRingPool implements HostPool {
 		byte[] digest = md.digest();
 
 		long hash = ((long) digest[3] & 0xFF << 24) |
-			((long) digest[2] & 0xFF << 16) |
-			((long) digest[1] & 0xFF << 8) |
-			((long) digest[0] & 0xFF);
+				((long) digest[2] & 0xFF << 16) |
+				((long) digest[1] & 0xFF << 8) |
+				((long) digest[0] & 0xFF);
 		return hash;
 	}
 

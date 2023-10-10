@@ -22,12 +22,11 @@ public class HttpUtil {
 
   public static String formatRedirect(String redirect) {
     return String.format(
-      """
-      HTTP/1.1 307 Temporary Redirect
-      Location: %s
-      Content-length: 0
-      \n
-      """
-    , redirect);
+        """
+            HTTP/1.1 307 Temporary Redirect
+            Location: %s
+            Content-length: 0
+            \n
+            """, redirect);
   }
 }

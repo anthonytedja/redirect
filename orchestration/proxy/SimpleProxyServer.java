@@ -36,7 +36,8 @@ public class SimpleProxyServer {
 
 			runServer();
 		} catch (ArrayIndexOutOfBoundsException e) {
-			System.err.println("Usage: java SimpleProxyServer IS_VERBOSE PROXY_PORT CACHE_SIZE NUM_THREADS REPLICATION_FACTOR");
+			System.err.println(
+					"Usage: java SimpleProxyServer IS_VERBOSE PROXY_PORT CACHE_SIZE NUM_THREADS REPLICATION_FACTOR");
 		} catch (Exception e) {
 			System.err.println(e);
 		}
@@ -44,7 +45,7 @@ public class SimpleProxyServer {
 
 	private static List<String> readLinesFromFile(String filepath) throws FileNotFoundException {
 		List<String> lines = new ArrayList<String>();
-		
+
 		File file = new File(filepath);
 		Scanner scanner = new Scanner(file);
 
@@ -88,16 +89,17 @@ public class SimpleProxyServer {
 			worker[i] = new SimpleProxyThread(i, work, HOST_PORT, IS_VERBOSE);
 			worker[i].start();
 		}
-		
-		ServerSocket serverConnect = new ServerSocket(PROXY_PORT);
-		System.out.println(new Date() + ": Proxy started.\nListening for connections on port : " + PROXY_PORT + " ...\n");
 
-		// listen until user halts server execution
-		while (true) {
-			Socket socket = serverConnect.accept();
-			work.getQueue().enqueue(socket);
-			if (IS_VERBOSE) {
-				System.out.println(new Date() + ": Connection opened");
+		try (ServerSocket serverConnect = new ServerSocket(PROXY_PORT)) {
+			System.out.println(new Date() + ": Proxy started on port : " + PROXY_PORT + " ...\n");
+
+			// listen until user halts server execution
+			while (true) {
+				Socket socket = serverConnect.accept();
+				work.getQueue().enqueue(socket);
+				if (IS_VERBOSE) {
+					System.out.println(new Date() + ": Connection opened");
+				}
 			}
 		}
 	}

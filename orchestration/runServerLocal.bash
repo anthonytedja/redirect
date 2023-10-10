@@ -13,7 +13,7 @@ SLEEP_DURATION=60000
 
 
 if [ ! -f /virtual/$USER/URLShortner/data.db ]; then
-    ./storage/createDBLocal.bash 10
+    ./storage/createDBLocal.bash
 fi
 
 cd server

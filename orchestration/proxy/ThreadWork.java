@@ -15,7 +15,7 @@ public class ThreadWork {
 			this.queue = new LinkedList<Socket>();
 		}
 
-		public synchronized void enqueue(Socket client) throws InterruptedException { // no limit?
+		public synchronized void enqueue(Socket client) throws InterruptedException {
 			this.queue.add(client);
 			notifyAll();
 		}
@@ -34,7 +34,7 @@ public class ThreadWork {
 		}
 	}
 
-	class LRUCache { // TODO
+	class LRUCache {
 		private Map<String, String> cache;
 		private int maxSize;
 

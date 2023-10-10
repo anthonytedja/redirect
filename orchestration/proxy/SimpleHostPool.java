@@ -48,7 +48,7 @@ public class SimpleHostPool implements HostPool {
 	}
 
 	/**
-	 * Data is partioned across clusters (data is replicated within a cluster).
+	 * Data is partitioned across clusters (data is replicated within a cluster).
 	 * Load balances using a static hashing method. Currently only maps to
 	 * two clusters as the number of available hosts is constrained.
 	 */

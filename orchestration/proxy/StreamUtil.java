@@ -17,11 +17,9 @@ public class StreamUtil {
     // build StreamUtil obj given a socket
     public static StreamUtil fromSocket(Socket socket) throws IOException {
         return new StreamUtil(
-            new BufferedReader(
-                new InputStreamReader(socket.getInputStream())
-            ),
-            socket.getOutputStream()
-        );
+                new BufferedReader(
+                        new InputStreamReader(socket.getInputStream())),
+                socket.getOutputStream());
     }
 
     public StreamUtil(BufferedReader in, OutputStream out) {
@@ -48,6 +46,6 @@ public class StreamUtil {
     // writes to out socket
     public void write(String text) throws IOException {
         this.out.write(text.getBytes(StandardCharsets.UTF_8));
-        this.out.flush();       
+        this.out.flush();
     }
 }

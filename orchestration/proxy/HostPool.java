@@ -8,7 +8,7 @@ public interface HostPool {
 	 * Returned hosts are used for reads and writes.
 	 */
 	public List<String> getHosts(String key);
-	
+
 	/**
 	 * Add a host to the system.
 	 */

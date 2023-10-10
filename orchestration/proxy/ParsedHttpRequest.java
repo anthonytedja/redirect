@@ -17,7 +17,7 @@ class ParsedHttpRequest {
 	public static final String KEY_NEWHOST = "newhost";
 	public static final String KEY_OLDHOST = "oldhost";
 
-	private static final int MAX_BODY_SIZE = 1024; // should be enough for now
+	private static final int MAX_BODY_SIZE = 1024;
 
 	private String method;
 	private Map<String, String> params;
@@ -51,8 +51,8 @@ class ParsedHttpRequest {
 	private void parseRequest(BufferedReader in) throws IOException {
 		List<String> requestLines = new ArrayList<String>();
 
-        // get first line
-        String firstLine = in.readLine();
+		// get first line
+		String firstLine = in.readLine();
 		String[] parsedFirstLine = firstLine.split(" ", 3);
 		this.method = parsedFirstLine[0];
 		// get params - parsed manually through string operations
@@ -72,30 +72,30 @@ class ParsedHttpRequest {
 				}
 			}
 		}
-        requestLines.add(firstLine);
+		requestLines.add(firstLine);
 
-        // get headers
+		// get headers
 		String inputLine;
-        while (!(inputLine = in.readLine()).equals("")) {
+		while (!(inputLine = in.readLine()).equals("")) {
 			String[] parsed = inputLine.split(": ", 2);
-            this.headers.put(parsed[0], parsed[1]);
+			this.headers.put(parsed[0], parsed[1]);
 
-            requestLines.add(inputLine);
-        }
+			requestLines.add(inputLine);
+		}
 
-        // get body
-        String contentLength = this.headers.get(HEADER_CONTENT_LENGTH);
-        if (this.headers.get(HEADER_CONTENT_LENGTH) != null)  {
-            int bodySize = Integer.parseInt(contentLength);
-            char[] readBuf = new char[MAX_BODY_SIZE];
+		// get body
+		String contentLength = this.headers.get(HEADER_CONTENT_LENGTH);
+		if (this.headers.get(HEADER_CONTENT_LENGTH) != null) {
+			int bodySize = Integer.parseInt(contentLength);
+			char[] readBuf = new char[MAX_BODY_SIZE];
 
-            in.read(readBuf, 0, bodySize);
-            String body = new String(readBuf, 0, bodySize);
+			in.read(readBuf, 0, bodySize);
+			String body = new String(readBuf, 0, bodySize);
 
-            requestLines.add("");
-            requestLines.add(body);
-        }
+			requestLines.add("");
+			requestLines.add(body);
+		}
 
-        this.request = String.join("\n", requestLines);
+		this.request = String.join("\n", requestLines);
 	}
 }

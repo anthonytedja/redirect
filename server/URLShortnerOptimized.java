@@ -30,7 +30,8 @@ public class URLShortnerOptimized {
 
 			// create persister thread to periodically flush write buffer into database
 			if (WRITE_BUFFER_SIZE >= 0) {
-				Thread writer = new Thread(new DatabaseWriteWorker(work, IS_VERBOSE, SLEEP_DURATION, WRITE_BUFFER_SIZE));
+				Thread writer = new Thread(
+						new DatabaseWriteWorker(work, IS_VERBOSE, SLEEP_DURATION, WRITE_BUFFER_SIZE));
 				writer.start();
 			}
 
@@ -40,9 +41,10 @@ public class URLShortnerOptimized {
 				worker[i] = new Thread(new URLShortnerWorker(i, work, IS_VERBOSE));
 				worker[i].start();
 			}
-			
+
 			try (ServerSocket serverConnect = new ServerSocket(PORT)) {
-				System.out.println(new Date() + ": Server started.\nListening for connections on port : " + PORT + " ...\n");
+				System.out.println(
+						new Date() + ": Server started.\nListening for connections on port : " + PORT + " ...\n");
 
 				// listen until user halts server execution
 				while (true) {

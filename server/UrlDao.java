@@ -46,11 +46,6 @@ public class UrlDao {
 		Connection conn = null;
 		try {
 			conn = connect(this.dbPath);
-			/**
-			 * pragma locking_mode=EXCLUSIVE;
-			 * pragma mmap_size = 30000000000;
-			 * pragma temp_store = memory;
-			 **/
 			String sql = """
 					 	pragma journal_mode = WAL;
 						pragma synchronous = normal;
@@ -84,7 +79,7 @@ public class UrlDao {
 
 			String updateSQL = "INSERT OR REPLACE INTO urls (short_code, url_original) VALUES (?, ?);";
 			PreparedStatement ps = conn.prepareStatement(updateSQL);
-			
+
 			for (String key : shortToLong.keySet()) {
 				ps.setString(1, key);
 				ps.setString(2, shortToLong.get(key));

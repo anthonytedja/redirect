@@ -9,9 +9,11 @@ import java.net.Socket;
  * Collection of data necessary for concurrent thread work.
  * 
  * Includes
- * - a synchronized queue of sockets that threads can pull work from to handle client connections
+ * - a synchronized queue of sockets that threads can pull work from to handle
+ * client connections
  * - a synchronized cache for storing recent requests
- * - a synchronized write buffer for containing write data that will be persisted later on
+ * - a synchronized write buffer for containing write data that will be
+ * persisted later on
  */
 public class ThreadWork {
 
@@ -83,10 +85,10 @@ public class ThreadWork {
 		// dump and re-initialize buffer
 		public synchronized HashMap<String, String> flush() throws InterruptedException { // called by write thread
 			/*
-			while (!isFull()) {
-				wait();
-			}
-			*/
+			 * while (!isFull()) {
+			 * wait();
+			 * }
+			 */
 			HashMap<String, String> currBuffer = this.buffer;
 			this.buffer = new HashMap<String, String>();
 
@@ -97,10 +99,10 @@ public class ThreadWork {
 			this.buffer.put(key, value);
 
 			/*
-			if (isFull()) {
-				notifyAll(); // wake up write thread if necessary
-			}
-			*/
+			 * if (isFull()) {
+			 * notifyAll(); // wake up write thread if necessary
+			 * }
+			 */
 		}
 	}
 

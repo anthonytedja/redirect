@@ -38,7 +38,7 @@ class URLShortnerWorker implements Runnable {
 		this.isCacheEnabled = work.getCache().getMaxSize() <= 0 ? false : true; // disable if specified size is <= 0
 		this.isWriteBufferEnabled = work.getWriteBuffer().getMaxSize() <= 0 ? false : true;
 	}
-	
+
 	public void run() {
 		// wait for socket to become available - check socket queue
 		while (true) {
@@ -50,7 +50,7 @@ class URLShortnerWorker implements Runnable {
 			}
 		}
 	}
-	
+
 	public void handle(Socket connect) {
 		BufferedReader in = null;
 		PrintWriter out = null;

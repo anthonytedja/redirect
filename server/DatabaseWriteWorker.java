@@ -6,7 +6,8 @@ import java.sql.SQLException;
 
 /**
  * Thread responsible for flushing the write buffer to database.
- * Checks every <SLEEP_DURATION> whether the buffer is at least <MAX_BUFFER_SIZE> and forces a flush every <MAX_CHECKS> checks.
+ * Checks every <SLEEP_DURATION> whether the buffer is at least
+ * <MAX_BUFFER_SIZE> and forces a flush every <MAX_CHECKS> checks.
  */
 class DatabaseWriteWorker implements Runnable {
 	private boolean VERBOSE;
@@ -15,15 +16,15 @@ class DatabaseWriteWorker implements Runnable {
 	private static final int MAX_CHECKS = 1;
 
 	private ThreadWork work;
-	
-	public DatabaseWriteWorker(ThreadWork work,  boolean verbose, int sleepDuration, int maxBufferSize) {
+
+	public DatabaseWriteWorker(ThreadWork work, boolean verbose, int sleepDuration, int maxBufferSize) {
 		this.VERBOSE = verbose;
 		this.SLEEP_DURATION = sleepDuration;
 		this.MAX_BUFFER_SIZE = maxBufferSize;
 
 		this.work = work;
 	}
-	
+
 	public void run() {
 		while (true) {
 			try {
