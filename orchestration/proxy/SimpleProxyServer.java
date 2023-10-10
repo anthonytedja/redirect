@@ -15,6 +15,7 @@ public class SimpleProxyServer {
 	static boolean IS_VERBOSE; // toggle log statements
 	static int CACHE_SIZE; // 1; NOT USED YET
 	static int NUM_THREADS; // 4
+	static int REPLICATION_FACTOR; // 2
 	static int PROXY_PORT;
 	static int HOST_PORT;
 
@@ -25,6 +26,7 @@ public class SimpleProxyServer {
 			HOST_PORT = getHostPort();
 			CACHE_SIZE = Integer.parseInt(args[2]);
 			NUM_THREADS = Integer.parseInt(args[3]);
+			REPLICATION_FACTOR = Integer.parseInt(args[4]);
 
 			if (IS_VERBOSE) {
 				System.out.println("Starting proxy...");
@@ -34,7 +36,7 @@ public class SimpleProxyServer {
 
 			runServer();
 		} catch (ArrayIndexOutOfBoundsException e) {
-			System.err.println("Usage: java SimpleProxyServer IS_VERBOSE PROXY_PORT CACHE_SIZE NUM_THREADS");
+			System.err.println("Usage: java SimpleProxyServer IS_VERBOSE PROXY_PORT CACHE_SIZE NUM_THREADS REPLICATION_FACTOR");
 		} catch (Exception e) {
 			System.err.println(e);
 		}
@@ -70,7 +72,7 @@ public class SimpleProxyServer {
 	 * the specified local port. It never returns.
 	 */
 	private static void runServer() throws IOException, InterruptedException {
-		ThreadWork work = new ThreadWork(CACHE_SIZE);
+		ThreadWork work = new ThreadWork(REPLICATION_FACTOR, CACHE_SIZE);
 
 		List<String> hosts = getInitialHosts();
 		for (String host : hosts) {

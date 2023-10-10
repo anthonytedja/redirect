@@ -60,9 +60,8 @@ public class ThreadWork {
 	private SocketQueue queue;
 	private LRUCache cache;
 
-	public ThreadWork(int maxCacheSize) {
-		//this.buffer = new WriteBuffer(maxBufferSize);
-		this.hostPool = new SimpleHostPool();
+	public ThreadWork(int replicationFactor, int maxCacheSize) {
+		this.hostPool = new ConsistentRingPool(replicationFactor);
 		this.queue = new SocketQueue();
 		this.cache = new LRUCache(maxCacheSize);
 	}

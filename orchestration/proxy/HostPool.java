@@ -4,7 +4,8 @@ import java.util.List;
 
 public interface HostPool {
 	/**
-	 * Get a collection of hosts for an operation, such as a read or a write.
+	 * Return a collection of hosts that correspond to the provided key.
+	 * Returned hosts are used for reads and writes.
 	 */
 	public List<String> getHosts(String key);
 	
