@@ -221,8 +221,13 @@ Proxy configurations can be adjusted in `orchestration/proxy/runProxyLocal.bash`
 
 ### Usage
 
-Run the following command from root to start the system:
+Run the following command from the root folder to build the system (must happen before running):
 
+```bash
+./make.bash
+```
+
+Run the following command from the root folder to run the system:
 ```bash
 ./dostuff.bash
 ```
