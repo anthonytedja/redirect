@@ -130,61 +130,52 @@ graph TD
 classDef blue fill:#2374f7,stroke:#000,stroke-width:2px,color:#fff
 ```
 
+The following mermaid diagram the GET Request Data Flow in blue, view in a markdown viewer that supports mermaid diagrams such as GitHub.
+
 #### PUT Data Flow
 
 1. User sends a PUT request to the proxy with a short and long url.
 2. The proxy selects a cluster to use for the request by hashing the short url.
 3. The proxy will forward the request to all hosts in the cluster.
-4. The hosts will write the short and long url pair to their own buffers.
-5. The hosts buffer will flush to the database when it reaches a certain size / time limit.
-6. The hosts will cache the short and long url pair.
-7. The hosts will notify the proxy that the write was successful.
+4. The host server will write the short and long url pair to their own buffers.
+5. The host server buffer will flush to the database when it reaches a certain size / time limit.
+6. The host server will cache the short and long url pair.
+7. The host server will notify the proxy that the write was successful.
 8. The proxy will return a success response to the user.
 
 ```mermaid
 graph TD
   user((User)):::blue
-  user --- |HTTP Request| proxy
-  proxy --- cluster1
+  user --> |1. PUT Request| proxy
+  proxy --> |2 & 3. Forward Request to Host 1 & 2 Server| cluster1
   proxy --- cluster2
   subgraph proxy["Proxy Service"]
-  note([Note: Data is partitioned between clusters <br> and replicated within clusters]) -.-
-  orchestrator(Multithreaded Orchestrator) --- cache[(<br>Server Response <br> Cache)]
+  orchestrator(Multithreaded Orchestrator):::blue --- cache[(<br>Server Response <br> Cache)]
   end
-  subgraph monitor["Monitor Service"]
-  health((Health & Recovery))
-  end
-  monitor --- proxy
-  monitor -.- host1
-  monitor -.- host2
-  monitor -.- host3
-  monitor -.- host4
-  monitor -.- server1
-  monitor -.- server2
-  monitor -.- server3
-  monitor -.- server4
   subgraph cluster2["Cluster 2"]
-  host3([Host 3]):::blue --- server3(Multithreaded Server)
+  host3([Host 3]) --- server3(Multithreaded Server)
   server3 --- cache3[(Url Cache)]
   server3 --- |Buffer| cluster2db1[(<br> Cluster 2 Data <br><br>)]
-
-  host4([Host 4]):::blue --- server4(Multithreaded Server)
+  host4([Host 4]) --- server4(Multithreaded Server)
   server4 --- cache4[(Url Cache)]
   server4 --- |Buffer| cluster2db2[(<br> Cluster 2 Data <br><br>)]
   end
   subgraph cluster1["Cluster 1"]
-  host1([Host 1]):::blue --- server1(Multithreaded Server)
-  server1 --- cache1[(Url Cache)]
-  server1 --- |Buffer| cluster1db1[(<br> Cluster 1 Data <br><br>)]
-
-  host2([Host 2]):::blue --- server2(Multithreaded Server)
-  server2 --- cache2[(Url Cache)]
-  server2 --- |Buffer| cluster1db2[(<br> Cluster 1 Data <br><br>)]
+  host1([Host 1]):::blue --> server1(Multithreaded Server):::blue
+  server1 --> |6. Cache URL Pair| cache1[(Url Cache)]:::blue
+  server1 --> |4 & 5. Buffer writing to DB| cluster1db1[(<br> Cluster 1 Data <br><br>)]:::blue
+  host2([Host 2]):::blue --> server2(Multithreaded Server):::blue
+  server2 --> |6. Cache URL Pair| cache2[(Url Cache)]:::blue
+  server2 --> |4 & 5. Buffer writing to DB| cluster1db2[(<br> Cluster 1 Data <br><br>)]:::blue
   end
-
+  cluster1 --> |7. Successfully Saved| proxy
+  proxy --> |8. Got it Response| user
+  
 %% Colors %%
 classDef blue fill:#2374f7,stroke:#000,stroke-width:2px,color:#fff
 ```
+
+The following mermaid diagram the PUT Request Data Flow in blue, view in a markdown viewer that supports mermaid diagrams such as GitHub.
 
 ### Code Overview
 
@@ -221,13 +212,14 @@ Proxy configurations can be adjusted in `orchestration/proxy/runProxyLocal.bash`
 
 ### Usage
 
-Run the following command from the root folder to build the system (must happen before running):
+Run the following command from the root folder to build the system (must happen before running system):
 
 ```bash
 ./make.bash
 ```
 
 Run the following command from the root folder to run the system:
+
 ```bash
 ./dostuff.bash
 ```
