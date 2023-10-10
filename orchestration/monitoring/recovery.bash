@@ -16,8 +16,7 @@ check_hosts() {
 		if [[ $host_status == *"unreachable"* ]] || [[ $server_status == *"down"* ]]
 		then
 			# get the host to clone the data from to the new host
-			clone_host=$(curl "localhost:$PROXYPORT?gethostclone=$host")
-			./orchestration/addHost.bash $host $clone_host
+			./orchestration/addHost.bash $host
 		fi
 	done
 	echo "--------------------------------------------------------------------------------"
