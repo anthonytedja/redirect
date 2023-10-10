@@ -15,7 +15,7 @@ graph TD
   subgraph monitor["Monitor Service"]
   health((Health & Recovery))
   end
-  monitor --> proxy
+  monitor --- proxy
   monitor -.- host1
   monitor -.- host2
   monitor -.- host3
@@ -53,6 +53,8 @@ The following mermaid diagram architecturally describes the system, view in a ma
 
 - [Architecture](#architecture)
   - [System Overview](#system-overview)
+    - [GET Data Flow](#get-data-flow)
+    - [PUT Data Flow](#put-data-flow)
   - [Code Overview](#code-overview)
 - [Running The System](#running-the-system)
   - [Initial Setup](#initial-setup)
@@ -78,6 +80,111 @@ The system structure is composed of the following components:
 - **Host**: The host is responsible for running the server and storing the data. They are multithreaded and will handle requests concurrently. For writes, the server writes to a buffer to minimize the write to the database. For reads, the server will first check the cache for the key value pair of short and long url respectively before checking the database.
 
 - **Monitor**: The monitor service is responsible for monitoring the health of the system. It will check on the health of all hosts and servers every 5 seconds by default. If a host or server is down, it will recover by cloning the data from a host within the same cluster as the failed host onto a new host. It will also notify the orchestrator of the new host so that it can be used in replacement of the failed node.
+
+#### GET Data Flow
+
+1. User sends a GET request to the proxy with a short url.
+2. The proxy will check the cache for the short url and returns the server response if found.
+3. The proxy selects a cluster to use for the request by hashing the short url.
+4. The proxy forwards the request to a host and will retry until a response is received on a different host in the cluster if the host is unreachable.
+5. The host server will check its own cache for the short url and returns the long url if found.
+6. The host server will check the database for the short url and returns the long url if found.
+7. The host server will cache the short and long url pair and return the url to the proxy.
+8. The proxy will cache the short and server response pair.
+9. The proxy will return the server response to the user.
+
+```mermaid
+graph TD
+  user((User)):::blue
+  user --> |1. GET Request| proxy
+  proxy --> |3 & 4. Forward Request to Host 1 Server| cluster1
+  proxy --- cluster2
+  proxy --> |9. Redirected URL Response| user
+  subgraph proxy["Proxy Service"]
+  cache --> |2. Server Response| orchestrator
+  orchestrator(Multithreaded Orchestrator):::blue --> |2. Check Cache| cache[(<br>Server Response <br> Cache)]:::blue
+  orchestrator --> |8. Cache Short & Server Response| cache
+  end
+  subgraph cluster2["Cluster 2"]
+  host3([Host 3]) --- server3(Multithreaded Server)
+  server3 --- cache3[(Url Cache)]
+  server3 --- |Buffer| cluster2db1[(<br> Cluster 2 Data <br><br>)]
+  host4([Host 4]) --- server4(Multithreaded Server)
+  server4 --- cache4[(Url Cache)]
+  server4 --- |Buffer| cluster2db2[(<br> Cluster 2 Data <br><br>)]
+  end
+  subgraph cluster1["Cluster 1"]
+  host1([Host 1]):::blue --> server1(Multithreaded Server):::blue
+  server1 --> |7. Cache Short & Long URL| cache1
+  cache1 --> |5. Long URL Response| server1
+  server1 --> |5. Check Cache| cache1[(Url Cache)]:::blue
+  cluster1db1 --> |6. DB Response| server1
+  server1 --> |6. Check DB| cluster1db1[(<br> Cluster 1 Data <br><br>)]:::blue
+  host2([Host 2]) --- server2(Multithreaded Server)
+  server2 --- cache2[(Url Cache)]
+  server2 --- |Buffer| cluster1db2[(<br> Cluster 1 Data <br><br>)]
+  end
+  cluster1 --> |7. URL Response| proxy
+  
+%% Colors %%
+classDef blue fill:#2374f7,stroke:#000,stroke-width:2px,color:#fff
+```
+
+#### PUT Data Flow
+
+1. User sends a PUT request to the proxy with a short and long url.
+2. The proxy selects a cluster to use for the request by hashing the short url.
+3. The proxy will forward the request to all hosts in the cluster.
+4. The hosts will write the short and long url pair to their own buffers.
+5. The hosts buffer will flush to the database when it reaches a certain size / time limit.
+6. The hosts will cache the short and long url pair.
+7. The hosts will notify the proxy that the write was successful.
+8. The proxy will return a success response to the user.
+
+```mermaid
+graph TD
+  user((User)):::blue
+  user --- |HTTP Request| proxy
+  proxy --- cluster1
+  proxy --- cluster2
+  subgraph proxy["Proxy Service"]
+  note([Note: Data is partitioned between clusters <br> and replicated within clusters]) -.-
+  orchestrator(Multithreaded Orchestrator) --- cache[(<br>Server Response <br> Cache)]
+  end
+  subgraph monitor["Monitor Service"]
+  health((Health & Recovery))
+  end
+  monitor --- proxy
+  monitor -.- host1
+  monitor -.- host2
+  monitor -.- host3
+  monitor -.- host4
+  monitor -.- server1
+  monitor -.- server2
+  monitor -.- server3
+  monitor -.- server4
+  subgraph cluster2["Cluster 2"]
+  host3([Host 3]):::blue --- server3(Multithreaded Server)
+  server3 --- cache3[(Url Cache)]
+  server3 --- |Buffer| cluster2db1[(<br> Cluster 2 Data <br><br>)]
+
+  host4([Host 4]):::blue --- server4(Multithreaded Server)
+  server4 --- cache4[(Url Cache)]
+  server4 --- |Buffer| cluster2db2[(<br> Cluster 2 Data <br><br>)]
+  end
+  subgraph cluster1["Cluster 1"]
+  host1([Host 1]):::blue --- server1(Multithreaded Server)
+  server1 --- cache1[(Url Cache)]
+  server1 --- |Buffer| cluster1db1[(<br> Cluster 1 Data <br><br>)]
+
+  host2([Host 2]):::blue --- server2(Multithreaded Server)
+  server2 --- cache2[(Url Cache)]
+  server2 --- |Buffer| cluster1db2[(<br> Cluster 1 Data <br><br>)]
+  end
+
+%% Colors %%
+classDef blue fill:#2374f7,stroke:#000,stroke-width:2px,color:#fff
+```
 
 ### Code Overview
 
