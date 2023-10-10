@@ -75,7 +75,7 @@ The following mermaid diagram architecturally describes the system, view in a ma
   - [Throughput](#throughput)
   - [Availability](#availability)
   - [Durability](#durability)
-  - [Fault Tolerance](#fault-tolerance)
+  - [Health Check](#health-check)
 
 ## Architecture
 
@@ -372,4 +372,4 @@ The durability of the system is strong since each url pairing will be replicated
 
 ### Health Check
 
-The application periodically pings each host and the status of the server on each host.If a node goes down, the system will spawn another node and start the process within 5 seconds. While the service is down, requests to other nodes still operate as normal.
+The application periodically pings each host and the status of the server on each host. If a node goes down, the system will spawn another node and start the process within 5 seconds. While the service is down, requests to other nodes still operate as normal.
