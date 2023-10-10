@@ -4,7 +4,7 @@
 
 CWD=$(pwd)
 HOSTPORT=$(cat HOSTPORT)
-PROXYPORT=8070
+PROXYPORT=8000
 
 # find a new host from HOSTSALL that is not already in HOSTS
 new_host=$(grep -v -f HOSTS HOSTSALL | shuf -n 1)
@@ -22,9 +22,9 @@ fi
 if [ "$1" != "" ]
 then
     sed -i "s/$1/$new_host/g" HOSTS
-    curl -X PUT "http://localhost:$PROXYPORT/?newhost=$new_host&oldhost=$1"
+    curl -X PUT "http://localhost:$PROXYPORT/?newhost=$new_host&oldhost=$1" 2> /dev/null > /dev/null
 else
     # add it the end of the file on a new line
     sed -i "$ a $new_host" HOSTS
-    curl -X PUT "http://localhost:$PROXYPORT/?newhost=$new_host"
+    curl -X PUT "http://localhost:$PROXYPORT/?newhost=$new_host" 2> /dev/null > /dev/null
 fi
