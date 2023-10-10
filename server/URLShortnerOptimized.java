@@ -12,7 +12,7 @@ public class URLShortnerOptimized {
 	static int PORT;
 	static String DB_PATH;
 	static int CACHE_SIZE; // 1; NOT USED YET
-	static int WRITE_BUFFER_SIZE; // 1000; NOT USED YET
+	static int WRITE_BUFFER_SIZE; // 1000
 	static int NUM_THREADS; // 4
 	static int SLEEP_DURATION; // 60000; 1 min
 
@@ -30,7 +30,7 @@ public class URLShortnerOptimized {
 
 			// create persister thread to periodically flush write buffer into database
 			if (WRITE_BUFFER_SIZE >= 0) {
-				Thread writer = new Thread(new DatabaseWriteWorker(work, SLEEP_DURATION, IS_VERBOSE));
+				Thread writer = new Thread(new DatabaseWriteWorker(work, IS_VERBOSE, SLEEP_DURATION, WRITE_BUFFER_SIZE));
 				writer.start();
 			}
 
