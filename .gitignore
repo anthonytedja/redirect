@@ -4,3 +4,5 @@
 # exclude host logging
 *.out
 *.err
+
+.DS_Store

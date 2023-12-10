@@ -1,4 +1,4 @@
-# CSC409 A1 - URL Shortener
+# Redirect
 
 > A lightweight scalable URL Shortener system
 
@@ -137,7 +137,7 @@ graph TD
   server2 --- |Buffer| replica1db2[(<br> replica 1 Data <br><br>)]
   end
   replica1 --> |7. URL Response| proxy
-  
+
 %% Colors %%
 classDef blue fill:#2374f7,stroke:#000,stroke-width:2px,color:#fff
 ```
@@ -182,7 +182,7 @@ graph TD
   end
   replica1 --> |7. Successfully Saved| proxy
   proxy --> |8. Got it Response| user
-  
+
 %% Colors %%
 classDef blue fill:#2374f7,stroke:#000,stroke-width:2px,color:#fff
 ```
@@ -342,7 +342,7 @@ The proxy utilizes consistent hashing to load balance. The hash space is partiti
 
 Caches exist for both the proxy and server. The proxy cache maps URLs to responses sent by the servers, so they can be returned without having to contact the server again. This reduces the amount of time communicating over the network, which can be a significant bottleneck.
 
-he server cache stores short and long URLs to avoid creating another database connection.  This is also a significant bottleneck (IO).
+he server cache stores short and long URLs to avoid creating another database connection. This is also a significant bottleneck (IO).
 
 ### Scalability
 
